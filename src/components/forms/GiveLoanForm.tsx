@@ -123,6 +123,7 @@ export function GiveLoanForm() {
 
       <Button
         title="Give Loan"
+        variant="danger"
         onPress={handleSubmit}
         loading={addLoanMutation.isPending}
         disabled={addLoanMutation.isPending || categories.length === 0}

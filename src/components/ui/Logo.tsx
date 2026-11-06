@@ -1,6 +1,7 @@
 import { Image, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { Colors, Spacing } from '../../theme';
+import { Spacing, type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/ThemeProvider';
 import AppText from './AppText';
 
 interface LogoProps {
@@ -13,6 +14,8 @@ interface LogoProps {
 const LOGO = require('../../../assets/favicon-org.png');
 
 export function Logo({ size = 72, showWordmark = true, tagline, style }: LogoProps) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={[styles.container, style]}>
       <Image source={LOGO} style={{ width: size, height: size, borderRadius: size * 0.24 }} resizeMode="contain" />
@@ -32,18 +35,19 @@ export function Logo({ size = 72, showWordmark = true, tagline, style }: LogoPro
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-  },
-  wordmark: {
-    marginTop: Spacing.lg,
-    color: Colors.primaryDeep,
-  },
-  tagline: {
-    marginTop: Spacing.xs,
-    color: Colors.textSecondary,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      alignItems: 'center',
+    },
+    wordmark: {
+      marginTop: Spacing.lg,
+      color: colors.primaryDeep,
+    },
+    tagline: {
+      marginTop: Spacing.xs,
+      color: colors.textSecondary,
+    },
+  });
 
 export default Logo;

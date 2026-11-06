@@ -129,6 +129,7 @@ export function BalanceEntryForm({ mode }: BalanceEntryFormProps) {
 
       <Button
         title={copy.button}
+        variant={mode === 'incoming' ? 'success' : 'danger'}
         onPress={handleSubmit}
         loading={mutation.isPending}
         disabled={mutation.isPending || categories.length === 0}

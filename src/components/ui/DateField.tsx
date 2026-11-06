@@ -1,9 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+  type ViewStyle,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Shadows, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { formatDate } from '../../utils/format';
 import AppText from './AppText';
 
@@ -19,6 +29,24 @@ interface DateFieldProps {
   style?: ViewStyle;
 }
 
+function startOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function initialPickerDate(
+  value: Date | null,
+  minimumDate?: Date,
+  maximumDate?: Date,
+): Date {
+  const today = startOfDay(new Date());
+  let next = startOfDay(value ?? today);
+  if (minimumDate && next < startOfDay(minimumDate)) next = startOfDay(minimumDate);
+  if (maximumDate && next > startOfDay(maximumDate)) next = startOfDay(maximumDate);
+  return next;
+}
+
 export function DateField({
   label,
   value,
@@ -30,12 +58,23 @@ export function DateField({
   icon = 'calendar-outline',
   style,
 }: DateFieldProps) {
+  const { colors, mode } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const insets = useSafeAreaInsets();
+
   const [show, setShow] = useState(false);
-  const [draft, setDraft] = useState<Date>(value ?? new Date());
+  const [draft, setDraft] = useState<Date>(initialPickerDate(value, minimumDate, maximumDate));
 
   const openPicker = () => {
-    setDraft(value ?? new Date());
+    setDraft(initialPickerDate(value, minimumDate, maximumDate));
     setShow(true);
+  };
+
+  const close = () => setShow(false);
+
+  const clear = (event: GestureResponderEvent) => {
+    event.stopPropagation();
+    onChange(null);
   };
 
   const handleAndroidChange = (event: DateTimePickerEvent, date?: Date) => {
@@ -47,6 +86,8 @@ export function DateField({
     if (date) setDraft(date);
   };
 
+  const displayValue = value ? formatDate(value) : placeholder;
+
   return (
     <View style={styles.wrapper}>
       {label ? (
@@ -57,6 +98,8 @@ export function DateField({
 
       <Pressable
         onPress={openPicker}
+        accessibilityRole="button"
+        accessibilityLabel={label ? `${label}: ${displayValue}` : displayValue}
         style={({ pressed }) => [
           styles.field,
           error ? styles.fieldError : null,
@@ -64,34 +107,43 @@ export function DateField({
           style,
         ]}
       >
-        <Ionicons name={icon} size={18} color={Colors.primary} style={styles.leadIcon} />
         <AppText
           variant="body"
-          color={value ? Colors.textPrimary : Colors.textMuted}
+          weight="medium"
+          color={value ? colors.textPrimary : colors.textMuted}
           style={styles.fieldText}
         >
-          {value ? formatDate(value) : placeholder}
+          {displayValue}
         </AppText>
-        <View style={styles.icons}>
+
+        <View style={styles.trailing}>
           {value ? (
-            <Pressable onPress={() => onChange(null)} hitSlop={10} style={styles.clear}>
-              <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+            <Pressable
+              onPress={clear}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Clear date"
+              style={styles.clear}
+            >
+              <Ionicons name="close-circle" size={17} color={colors.textMuted} />
             </Pressable>
           ) : null}
+          <Ionicons name={icon} size={18} color={colors.primary} />
         </View>
       </Pressable>
 
       {error ? (
-        <AppText variant="caption" color={Colors.danger} style={styles.helper}>
+        <AppText variant="caption" color={colors.danger} style={styles.helper}>
           {error}
         </AppText>
       ) : null}
 
       {show && Platform.OS === 'android' ? (
         <DateTimePicker
-          value={value ?? new Date()}
+          value={draft}
           mode="date"
-          display="default"
+          display="calendar"
+          firstDayOfWeek={1}
           onChange={handleAndroidChange}
           minimumDate={minimumDate}
           maximumDate={maximumDate}
@@ -99,24 +151,33 @@ export function DateField({
       ) : null}
 
       {Platform.OS === 'ios' ? (
-        <Modal visible={show} transparent animationType="slide" onRequestClose={() => setShow(false)}>
-          <Pressable style={styles.backdrop} onPress={() => setShow(false)} />
-          <View style={styles.sheet}>
+        <Modal
+          visible={show}
+          transparent
+          animationType="slide"
+          statusBarTranslucent
+          onRequestClose={close}
+        >
+          <Pressable style={styles.backdrop} onPress={close} />
+          <View style={[styles.sheet, { paddingBottom: insets.bottom + Spacing.xl }]}>
+            <View style={styles.grabber} />
             <View style={styles.sheetHeader}>
-              <Pressable onPress={() => setShow(false)} hitSlop={8}>
-                <AppText variant="body" color={Colors.textSecondary}>
+              <Pressable onPress={close} hitSlop={8}>
+                <AppText variant="body" color={colors.textSecondary}>
                   Cancel
                 </AppText>
               </Pressable>
-              <AppText variant="h3">{label ?? 'Pick a date'}</AppText>
+              <AppText variant="h3" numberOfLines={1} style={styles.sheetTitle}>
+                {label ?? 'Select date'}
+              </AppText>
               <Pressable
                 onPress={() => {
                   onChange(draft);
-                  setShow(false);
+                  close();
                 }}
                 hitSlop={8}
               >
-                <AppText variant="body" weight="semiBold" color={Colors.primary}>
+                <AppText variant="body" weight="semiBold" color={colors.primary}>
                   Done
                 </AppText>
               </Pressable>
@@ -128,7 +189,10 @@ export function DateField({
               onChange={handleIosChange}
               minimumDate={minimumDate}
               maximumDate={maximumDate}
-              themeVariant="light"
+              themeVariant={mode}
+              textColor={colors.textPrimary}
+              accentColor={colors.primary}
+              style={styles.picker}
             />
           </View>
         </Modal>
@@ -137,42 +201,68 @@ export function DateField({
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { width: '100%' },
-  label: { marginBottom: Spacing.sm },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 54,
-  },
-  fieldPressed: { borderColor: Colors.primaryLight },
-  fieldError: { borderColor: Colors.danger },
-  leadIcon: { marginRight: Spacing.md },
-  fieldText: { flex: 1, marginRight: Spacing.sm },
-  icons: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  clear: { padding: 2 },
-  helper: { marginTop: Spacing.xs },
-  backdrop: { flex: 1, backgroundColor: 'rgba(33, 29, 56, 0.4)' },
-  sheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: { width: '100%' },
+    label: { marginBottom: Spacing.sm },
+    field: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      minHeight: 54,
+      gap: Spacing.sm,
+    },
+    fieldPressed: { borderColor: colors.primaryLight, backgroundColor: colors.surface },
+    fieldError: { borderColor: colors.danger },
+    fieldText: {
+      flex: 1,
+      fontVariant: ['tabular-nums'],
+      letterSpacing: 0.2,
+    },
+    trailing: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+    clear: {
+      width: 24,
+      height: 24,
+      borderRadius: Radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    helper: { marginTop: Spacing.xs },
+
+    backdrop: { flex: 1, backgroundColor: colors.backdrop },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      maxHeight: '80%',
+      ...Shadows.card,
+    },
+    grabber: {
+      alignSelf: 'center',
+      width: 44,
+      height: 5,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.border,
+      marginBottom: Spacing.md,
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    sheetTitle: {
+      flex: 1,
+      marginHorizontal: Spacing.sm,
+      textAlign: 'center',
+    },
+    picker: { alignSelf: 'stretch' },
+  });
 
 export default DateField;

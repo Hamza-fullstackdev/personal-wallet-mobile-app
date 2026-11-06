@@ -1,6 +1,7 @@
 import { Text, type TextProps, type TextStyle } from 'react-native';
 
-import { Colors, FontSize, Fonts } from '../../theme';
+import { FontSize, Fonts } from '../../theme';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type Variant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'label' | 'caption' | 'amount';
 
@@ -11,17 +12,6 @@ interface AppTextProps extends TextProps {
   center?: boolean;
 }
 
-const VARIANT_STYLES: Record<Variant, TextStyle> = {
-  display: { fontSize: FontSize.xxxl, fontFamily: Fonts.bold, color: Colors.textPrimary },
-  h1: { fontSize: FontSize.xxl, fontFamily: Fonts.bold, color: Colors.textPrimary },
-  h2: { fontSize: FontSize.xl, fontFamily: Fonts.semiBold, color: Colors.textPrimary },
-  h3: { fontSize: FontSize.lg, fontFamily: Fonts.semiBold, color: Colors.textPrimary },
-  body: { fontSize: FontSize.md, fontFamily: Fonts.regular, color: Colors.textPrimary },
-  label: { fontSize: FontSize.sm, fontFamily: Fonts.medium, color: Colors.textSecondary },
-  caption: { fontSize: FontSize.xs, fontFamily: Fonts.regular, color: Colors.textMuted },
-  amount: { fontSize: FontSize.md, fontFamily: Fonts.semiBold, color: Colors.textPrimary },
-};
-
 export function AppText({
   variant = 'body',
   color,
@@ -30,11 +20,24 @@ export function AppText({
   style,
   ...rest
 }: AppTextProps) {
+  const { colors } = useTheme();
+
+  const variantStyles: Record<Variant, TextStyle> = {
+    display: { fontSize: FontSize.xxxl, fontFamily: Fonts.bold, color: colors.textPrimary },
+    h1: { fontSize: FontSize.xxl, fontFamily: Fonts.bold, color: colors.textPrimary },
+    h2: { fontSize: FontSize.xl, fontFamily: Fonts.semiBold, color: colors.textPrimary },
+    h3: { fontSize: FontSize.lg, fontFamily: Fonts.semiBold, color: colors.textPrimary },
+    body: { fontSize: FontSize.md, fontFamily: Fonts.regular, color: colors.textPrimary },
+    label: { fontSize: FontSize.sm, fontFamily: Fonts.medium, color: colors.textSecondary },
+    caption: { fontSize: FontSize.xs, fontFamily: Fonts.regular, color: colors.textMuted },
+    amount: { fontSize: FontSize.md, fontFamily: Fonts.semiBold, color: colors.textPrimary },
+  };
+
   return (
     <Text
       {...rest}
       style={[
-        VARIANT_STYLES[variant],
+        variantStyles[variant],
         color ? { color } : null,
         weight ? { fontFamily: Fonts[weight] } : null,
         center ? { textAlign: 'center' } : null,

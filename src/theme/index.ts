@@ -1,53 +1,104 @@
 /**
  * THEME — Single source of truth for the app's look.
  *
- * BRAND RULE: the app uses exactly two core colors —
- *   - WHITE  (background / surfaces)
- *   - PURPLE (primary / brand)
+ * BRAND RULE: warm copper as the brand accent (no blue/purple), with semantic
+ * green for money coming in and red for money going out.
  *
- * Every tint below is derived from those two tones (purple ramps + neutral
- * purples). If you ever want to rebrand, change the values in `Colors` below —
- * every screen and component reads from here, nothing else needs touching.
+ * Every screen reads colors through `useTheme()` (see ThemeProvider) so the
+ * light/dark switch updates the whole app instantly. `LightColors` and
+ * `DarkColors` must expose exactly the same keys.
  */
 
-export const Colors = {
-  // ─── Brand purple ────────────────────────────────────────────────────────
-  /** Main primary color used for buttons, accents, active states. */
-  primary: '#524FFE',
-  /** Deep purple — gradient partner & pressed states, very dark text accents. */
-  primaryDeep: '#3A287A',
-  /** Slightly lighter purple for hovers / secondary accents. */
-  primaryLight: '#7C74FF',
-  /** Soft purple tint for badges, tags, and icon chips. */
-  primarySoft: '#EDECFF',
-  /** Very light purple for section fills and subtle backgrounds. */
-  primaryFaint: '#F6F5FF',
-  /** Text / icons sitting on top of primary. */
+export type ThemeMode = 'light' | 'dark';
+
+export const LightColors = {
+  // ─── Brand copper ────────────────────────────────────────────────────────
+  /** Main accent used for buttons, icons and active states. */
+  primary: '#A3541F',
+  /** Strong copper for emphasis text and pressed states. */
+  primaryDeep: '#7E3F18',
+  /** Lighter copper for secondary accents. */
+  primaryLight: '#C97A42',
+  /** Soft copper tint for badges, chips and icon backgrounds. */
+  primarySoft: '#F7EBDF',
+  /** Very light copper for section fills. */
+  primaryFaint: '#FCF7F1',
+  /** Text / icons sitting on top of the brand gradient. */
   onPrimary: '#FFFFFF',
 
-  // ─── White surfaces ──────────────────────────────────────────────────────
-  /** App background — stays white per brand rule. */
-  background: '#FFFFFF',
-  /** Card / surface backgrounds. */
+  // ─── Surfaces ────────────────────────────────────────────────────────────
+  background: '#FFFDFB',
   surface: '#FFFFFF',
-  /** Slightly off-white for alternate rows & input fills. */
-  surfaceAlt: '#F8F7FD',
-  /** Borders around inputs & cards. */
-  border: '#E7E4F7',
-  /** Hairline dividers. */
-  divider: '#F0EEFA',
+  surfaceAlt: '#FAF5EF',
+  border: '#EADDD1',
+  divider: '#F1E7DD',
 
-  // ─── Text (purple-tinted neutrals) ───────────────────────────────────────
-  textPrimary: '#211D38',
-  textSecondary: '#6C6883',
-  textMuted: '#A09CB6',
+  // ─── Text (warm neutrals) ────────────────────────────────────────────────
+  textPrimary: '#2A211B',
+  textSecondary: '#6B5D50',
+  textMuted: '#A08F7E',
 
-  // ─── Semantic / status (single-changeable utility colors) ───────────────
+  // ─── Semantic / status ───────────────────────────────────────────────────
   /** Positive / money-in accent. */
-  success: '#4E78F7',
+  success: '#15803D',
+  successSoft: 'rgba(21,128,61,0.12)',
+  successFaint: 'rgba(21,128,61,0.06)',
   /** Negative / money-out accent. */
-  danger: '#E0455A',
+  danger: '#C2352B',
+  dangerSoft: 'rgba(194,53,43,0.12)',
+  dangerFaint: 'rgba(194,53,43,0.06)',
+
+  // ─── Brand gradient stops ────────────────────────────────────────────────
+  gradientFrom: '#A3541F',
+  gradientTo: '#7E3F18',
+
+  // ─── Utility ─────────────────────────────────────────────────────────────
+  backdrop: 'rgba(42,33,27,0.40)',
+  shadow: '#2A211B',
+} as const;
+
+export type ThemeColors = {
+  -readonly [K in keyof typeof LightColors]: string;
 };
+
+export const DarkColors: ThemeColors = {
+  primary: '#B8692F',
+  primaryDeep: '#E8B184',
+  primaryLight: '#E0A066',
+  primarySoft: '#33241A',
+  primaryFaint: '#241A13',
+  onPrimary: '#FFFFFF',
+
+  background: '#12100E',
+  surface: '#1C1917',
+  surfaceAlt: '#26221E',
+  border: '#3A332D',
+  divider: '#2B2622',
+
+  textPrimary: '#F4EDE6',
+  textSecondary: '#C4B8AC',
+  textMuted: '#8E8174',
+
+  success: '#4ADE80',
+  successSoft: 'rgba(74,222,128,0.16)',
+  successFaint: 'rgba(74,222,128,0.08)',
+  danger: '#F87171',
+  dangerSoft: 'rgba(248,113,113,0.16)',
+  dangerFaint: 'rgba(248,113,113,0.08)',
+
+  gradientFrom: '#B8692F',
+  gradientTo: '#8A4A1D',
+
+  backdrop: 'rgba(0,0,0,0.60)',
+  shadow: '#000000',
+};
+
+/** Backwards-compatible light palette (prefer `useTheme().colors`). */
+export const Colors = LightColors;
+
+export function paletteFor(mode: ThemeMode): ThemeColors {
+  return mode === 'dark' ? DarkColors : LightColors;
+}
 
 /** Rounded corners used across the app. */
 export const Radius = {
@@ -87,17 +138,17 @@ export const FontSize = {
   xxxl: 36,
 };
 
-/** Elevation shadows (iOS + Android). */
+/** Elevation shadows (iOS + Android). Static across themes. */
 export const Shadows = {
   card: {
-    shadowColor: '#3A287A',
+    shadowColor: '#000000',
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
   fab: {
-    shadowColor: '#3A287A',
+    shadowColor: '#000000',
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -105,12 +156,13 @@ export const Shadows = {
   },
 };
 
-/** The brand gradient (left → right) used on primary buttons & hero cards. */
-export const Gradients = {
-  brand: [Colors.primary, Colors.primaryDeep] as const,
-  brandSoft: [Colors.primarySoft, Colors.primaryFaint] as const,
-};
+export function getGradients(colors: ThemeColors) {
+  return {
+    brand: [colors.gradientFrom, colors.gradientTo] as const,
+    brandSoft: [colors.primarySoft, colors.primaryFaint] as const,
+  };
+}
 
-export const theme = { Colors, Fonts, FontSize, Radius, Spacing, Shadows, Gradients };
+export const theme = { LightColors, DarkColors, Fonts, FontSize, Radius, Spacing, Shadows };
 
 export default theme;

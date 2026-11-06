@@ -35,6 +35,8 @@ export async function downloadStatementPdf(query: StatementQuery = {}): Promise<
   const response = await http.get(config.api.statementPdf, {
     params: query,
     responseType: 'arraybuffer',
+    // PDF generation is slower than the default API timeout.
+    timeout: 60_000,
   });
 
   const filename = buildPdfFilename(query);

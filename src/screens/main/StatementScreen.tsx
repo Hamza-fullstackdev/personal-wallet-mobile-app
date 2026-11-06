@@ -5,7 +5,6 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
-  Badge,
   Banner,
   Button,
   Card,
@@ -14,6 +13,8 @@ import {
   Loader,
   Screen,
   Select,
+  ToneBadge,
+  type BadgeTone,
   type SelectOption,
 } from '../../components/ui';
 import { useLoanPeople } from '../../hooks/useLoanPeople';
@@ -21,7 +22,8 @@ import { useStatementData } from '../../hooks/useStatement';
 import { useDownloadStatementPdf } from '../../hooks/useWalletMutations';
 import { useCategories } from '../../hooks/useCategories';
 import { useAuthStore } from '../../store/authStore';
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { daysAgo, formatAmount, toISODate } from '../../utils/format';
 
 type PeriodFilter = '30' | '60' | '90' | 'all' | 'custom';
@@ -49,6 +51,8 @@ const GENERAL_TYPES: SelectOption[] = [
 ];
 
 export function StatementScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const currency = useAuthStore((state) => state.user?.currency ?? 'PKR');
   const { categories } = useCategories();
   const { people } = useLoanPeople();
@@ -114,7 +118,6 @@ export function StatementScreen() {
   return (
     <Screen
       title="Bank Statement"
-      subtitle="Preview and export your ledger"
       refreshing={refreshing}
       onRefresh={refetch}
     >
@@ -128,7 +131,7 @@ export function StatementScreen() {
               onPress={() => applyPeriod(item.value)}
               style={[styles.chip, active ? styles.chipActive : null]}
             >
-              <AppText variant="caption" weight="semiBold" color={active ? Colors.onPrimary : Colors.textSecondary}>
+              <AppText variant="caption" weight="semiBold" color={active ? colors.onPrimary : colors.textSecondary}>
                 {item.label}
               </AppText>
             </Pressable>
@@ -138,27 +141,23 @@ export function StatementScreen() {
 
       <Card style={styles.filtersCard}>
         <View style={styles.fields}>
-          <View style={styles.filterRow}>
-            <View style={styles.filterHalf}>
-              <DateField
-                label="From"
-                value={startDate}
-                onChange={(date) => {
-                  setStartDate(date);
-                  setPeriod('custom');
-                }}
-              />
-            </View>
-            <View style={styles.filterHalf}>
-              <DateField
-                label="To"
-                value={endDate}
-                onChange={(date) => {
-                  setEndDate(date);
-                  setPeriod('custom');
-                }}
-              />
-            </View>
+          <View style={styles.dateRow}>
+            <DateField
+              label="From"
+              value={startDate}
+              onChange={(date) => {
+                setStartDate(date);
+                setPeriod('custom');
+              }}
+            />
+            <DateField
+              label="To"
+              value={endDate}
+              onChange={(date) => {
+                setEndDate(date);
+                setPeriod('custom');
+              }}
+            />
           </View>
 
           <Select
@@ -229,10 +228,10 @@ export function StatementScreen() {
               <SummaryTile label="Closing" value={summary.closingBalance} currency={currency} highlight />
               <SummaryTile label="Total credit" value={summary.totalCredit} currency={currency} />
               <SummaryTile label="Total debit" value={summary.totalDebit} currency={currency} />
-              <SummaryTile label="Income" value={summary.totalIncoming} currency={currency} />
-              <SummaryTile label="Expense" value={summary.totalOutgoing} currency={currency} />
-              <SummaryTile label="Loans given" value={summary.totalLoanGiven} currency={currency} />
-              <SummaryTile label="Loans returned" value={summary.totalLoanReturned} currency={currency} />
+              <SummaryTile label="Income" value={summary.totalIncoming} currency={currency} tone="in" />
+              <SummaryTile label="Expense" value={summary.totalOutgoing} currency={currency} tone="out" />
+              <SummaryTile label="Loans given" value={summary.totalLoanGiven} currency={currency} tone="out" />
+              <SummaryTile label="Loans returned" value={summary.totalLoanReturned} currency={currency} tone="in" />
             </View>
           ) : null}
 
@@ -270,30 +269,26 @@ export function StatementScreen() {
                         {tx.description}
                       </AppText>
                     </View>
-                    <Badge
-                      label={tx.typeLabel}
-                      color={Colors.primaryDeep}
-                      background={tx.type === 'outgoing' ? Colors.primarySoft : Colors.primaryFaint}
-                    />
+                    <ToneBadge label={tx.typeLabel} tone={statementTone(tx.type)} />
                   </View>
 
                   <View style={styles.txFooter}>
                     <View style={styles.txFooterItem}>
                       <AppText variant="caption">{tx.date}</AppText>
                       {tx.category && tx.category !== '—' ? (
-                        <AppText variant="caption" color={Colors.primary}>
+                        <AppText variant="caption" color={colors.primary}>
                           {tx.category}
                         </AppText>
                       ) : null}
                     </View>
                     <View style={styles.txAmounts}>
                       {tx.credit > 0 ? (
-                        <AppText variant="amount" color={Colors.primary}>
+                        <AppText variant="amount" color={colors.success}>
                           + {currency} {formatAmount(tx.credit, currency)}
                         </AppText>
                       ) : null}
                       {tx.debit > 0 ? (
-                        <AppText variant="amount" color={Colors.textSecondary}>
+                        <AppText variant="amount" color={colors.danger}>
                           - {currency} {formatAmount(tx.debit, currency)}
                         </AppText>
                       ) : null}
@@ -312,47 +307,78 @@ export function StatementScreen() {
   );
 }
 
+function statementTone(type: string): BadgeTone {
+  switch (type) {
+    case 'incoming':
+    case 'return':
+      return 'incoming';
+    case 'outgoing':
+    case 'loan':
+      return 'outgoing';
+    case 'switch':
+      return 'switch';
+    default:
+      return 'other';
+  }
+}
+
 function SummaryTile({
   label,
   value,
   currency,
   highlight,
+  tone,
 }: {
   label: string;
   value: number;
   currency: string;
   highlight?: boolean;
+  tone?: 'in' | 'out';
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
+  const toneColor = tone === 'in' ? colors.success : tone === 'out' ? colors.danger : undefined;
+  const toneBackground = tone === 'in' ? colors.successFaint : tone === 'out' ? colors.dangerFaint : undefined;
+
   return (
-    <View style={[styles.summaryTile, highlight ? styles.summaryTileHighlight : null]}>
-      <AppText variant="caption" color={highlight ? Colors.onPrimary : Colors.textSecondary}>
+    <View
+      style={[
+        styles.summaryTile,
+        toneBackground ? { backgroundColor: toneBackground, borderColor: toneColor } : null,
+        highlight ? styles.summaryTileHighlight : null,
+      ]}
+    >
+      <AppText variant="caption" color={highlight ? colors.onPrimary : toneColor ?? colors.textSecondary}>
         {label}
       </AppText>
-      <AppText variant="h3" color={highlight ? Colors.onPrimary : Colors.textPrimary} style={styles.summaryValue}>
+      <AppText variant="h3" color={highlight ? colors.onPrimary : toneColor ?? colors.textPrimary} style={styles.summaryValue}>
         {formatAmount(value, currency)}
       </AppText>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   chips: { gap: Spacing.sm, paddingBottom: Spacing.lg },
   chip: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filtersCard: { marginBottom: Spacing.lg },
   fields: { gap: Spacing.lg },
-  filterRow: { flexDirection: 'row', gap: Spacing.md },
-  filterHalf: { flex: 1 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+  filterHalf: { flexGrow: 1, flexBasis: 148, minWidth: 0 },
+  dateRow: { gap: Spacing.md },
   banner: { marginBottom: Spacing.lg },
   accountCard: { marginBottom: Spacing.lg },
-  accountDivider: { height: 1, backgroundColor: Colors.divider, marginVertical: Spacing.md },
+  accountDivider: { height: 1, backgroundColor: colors.divider, marginVertical: Spacing.md },
   accountMetaRow: { flexDirection: 'row', gap: Spacing.xl },
   accountMetaItem: { flex: 1, gap: 2 },
   summaryGrid: {
@@ -366,11 +392,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: Spacing.lg,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
   },
-  summaryTileHighlight: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  summaryTileHighlight: { backgroundColor: colors.primary, borderColor: colors.primary },
   summaryValue: { marginTop: Spacing.xs },
   downloadButton: { marginBottom: Spacing.xxl },
   sectionHeader: {
@@ -391,7 +417,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+    borderTopColor: colors.divider,
   },
   txFooterItem: { flex: 1, gap: 2 },
   txAmounts: { alignItems: 'flex-end', gap: 2 },

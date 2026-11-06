@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme } from '../../theme/ThemeProvider';
 import AppText from './AppText';
 
 interface BannerProps {
@@ -10,14 +11,16 @@ interface BannerProps {
   style?: ViewStyle;
 }
 
-const TONES = {
-  error: { icon: 'alert-circle' as const, color: Colors.danger, background: 'rgba(224,69,90,0.08)' },
-  info: { icon: 'information-circle' as const, color: Colors.primary, background: Colors.primaryFaint },
-  success: { icon: 'checkmark-circle' as const, color: Colors.primaryDeep, background: Colors.primarySoft },
-};
-
 export function Banner({ message, type = 'error', style }: BannerProps) {
-  const tone = TONES[type];
+  const { colors } = useTheme();
+
+  const tones = {
+    error: { icon: 'alert-circle' as const, color: colors.danger, background: colors.dangerFaint },
+    info: { icon: 'information-circle' as const, color: colors.primary, background: colors.primaryFaint },
+    success: { icon: 'checkmark-circle' as const, color: colors.success, background: colors.successFaint },
+  };
+
+  const tone = tones[type];
   return (
     <View style={[styles.banner, { backgroundColor: tone.background }, style]}>
       <Ionicons name={tone.icon} size={18} color={tone.color} />

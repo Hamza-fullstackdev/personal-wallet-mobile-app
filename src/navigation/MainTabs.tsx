@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useMemo } from 'react';
 
-import { Colors, Fonts } from '../theme';
+import { Fonts } from '../theme';
+import { useTheme } from '../theme/ThemeProvider';
 import type {
   HistoryStackParamList,
   HomeStackParamList,
@@ -29,15 +31,19 @@ const HistoryStack = createNativeStackNavigator<HistoryStackParamList>();
 const MoreStack = createNativeStackNavigator<MoreStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const STACK_SCREEN_OPTIONS = {
-  headerShown: false,
-  animation: 'slide_from_right',
-  contentStyle: { backgroundColor: Colors.background },
-} as const;
-
 function HomeStackNavigator() {
+  const { colors } = useTheme();
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: 'slide_from_right' as const,
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors.background],
+  );
+
   return (
-    <HomeStack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+    <HomeStack.Navigator screenOptions={screenOptions}>
       <HomeStack.Screen name="Dashboard" component={DashboardScreen} />
       <HomeStack.Screen name="AddIncome" component={AddIncomeScreen} />
       <HomeStack.Screen name="AddExpense" component={AddExpenseScreen} />
@@ -51,24 +57,54 @@ function HomeStackNavigator() {
 }
 
 function LoansStackNavigator() {
+  const { colors } = useTheme();
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: 'slide_from_right' as const,
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors.background],
+  );
+
   return (
-    <LoansStack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+    <LoansStack.Navigator screenOptions={screenOptions}>
       <LoansStack.Screen name="Loans" component={LoansScreen} />
     </LoansStack.Navigator>
   );
 }
 
 function HistoryStackNavigator() {
+  const { colors } = useTheme();
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: 'slide_from_right' as const,
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors.background],
+  );
+
   return (
-    <HistoryStack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+    <HistoryStack.Navigator screenOptions={screenOptions}>
       <HistoryStack.Screen name="History" component={HistoryScreen} />
     </HistoryStack.Navigator>
   );
 }
 
 function MoreStackNavigator() {
+  const { colors } = useTheme();
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: 'slide_from_right' as const,
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors.background],
+  );
+
   return (
-    <MoreStack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+    <MoreStack.Navigator screenOptions={screenOptions}>
       <MoreStack.Screen name="Settings" component={SettingsScreen} />
     </MoreStack.Navigator>
   );
@@ -82,21 +118,23 @@ const TAB_ICONS: Record<keyof MainTabParamList, IoniconName> = {
 };
 
 export function MainTabs() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         animation: 'fade',
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
+          backgroundColor: colors.surface,
           borderTopWidth: 0,
           height: 66,
           paddingTop: 8,
           paddingBottom: 10,
-          shadowColor: '#3A287A',
+          shadowColor: colors.shadow,
           shadowOpacity: 0.08,
           shadowRadius: 14,
           shadowOffset: { width: 0, height: -4 },

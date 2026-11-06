@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { useCallback, useMemo, useState } from "react";
+import { Alert, StyleSheet, Switch, View } from "react-native";
 
 import {
   AppText,
@@ -10,22 +11,26 @@ import {
   Screen,
   Select,
   type SelectOption,
-} from '../../components/ui';
-import { useCurrencies } from '../../hooks/useCurrencies';
-import { useUpdateUser } from '../../hooks/useWalletMutations';
-import { useAuthStore } from '../../store/authStore';
-import { Colors, Radius, Spacing } from '../../theme';
-import { initialOf } from '../../utils/format';
+} from "../../components/ui";
+import { useCurrencies } from "../../hooks/useCurrencies";
+import { useUpdateUser } from "../../hooks/useWalletMutations";
+import { useAuthStore } from "../../store/authStore";
+import { Radius, Spacing, type ThemeColors } from "../../theme";
+import { useTheme, useThemedStyles } from "../../theme/ThemeProvider";
+import { initialOf } from "../../utils/format";
 
 export function SettingsScreen() {
+  const { colors, mode, setMode } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
   const signOut = useAuthStore((state) => state.signOut);
 
-  const [name, setName] = useState(user?.name ?? '');
-  const [email, setEmail] = useState(user?.email ?? '');
-  const [password, setPassword] = useState('');
-  const [currency, setCurrency] = useState(user?.currency ?? 'PKR');
+  const [name, setName] = useState(user?.name ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [password, setPassword] = useState("");
+  const [currency, setCurrency] = useState(user?.currency ?? "PKR");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -45,11 +50,13 @@ export function SettingsScreen() {
 
   const validate = useCallback(() => {
     const next: Record<string, string> = {};
-    if (!name.trim()) next.name = 'Name is required.';
-    else if (name.trim().length < 3) next.name = 'Name must be at least 3 characters.';
-    if (!email.trim()) next.email = 'Email is required.';
-    else if (!email.includes('@')) next.email = 'Enter a valid email.';
-    if (password && password.length < 8) next.password = 'Password must be at least 8 characters.';
+    if (!name.trim()) next.name = "Name is required.";
+    else if (name.trim().length < 3)
+      next.name = "Name must be at least 3 characters.";
+    if (!email.trim()) next.email = "Email is required.";
+    else if (!email.includes("@")) next.email = "Enter a valid email.";
+    if (password && password.length < 8)
+      next.password = "Password must be at least 8 characters.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }, [name, email, password]);
@@ -59,7 +66,12 @@ export function SettingsScreen() {
     if (!validate()) return;
 
     try {
-      const payload: { name: string; email: string; currency: string; password?: string } = {
+      const payload: {
+        name: string;
+        email: string;
+        currency: string;
+        password?: string;
+      } = {
         name: name.trim(),
         email: email.trim(),
         currency,
@@ -68,86 +80,122 @@ export function SettingsScreen() {
 
       const result = await updateUserMutation.mutateAsync(payload);
       updateProfile(result.user);
-      setPassword('');
-      Alert.alert('Success', 'Profile updated successfully.');
+      setPassword("");
+      Alert.alert("Success", "Profile updated successfully.");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Something went wrong.');
+      setFormError(
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
     }
   };
 
   const handleLogout = () => {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+    Alert.alert("Sign out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign out", style: "destructive", onPress: () => signOut() },
     ]);
   };
 
   return (
-    <Screen title="Settings" subtitle="Manage your profile and preferences" icon="settings-outline">
+    <Screen
+      title='Settings'
+      icon='settings-outline'
+    >
+      <Card style={styles.appearanceCard}>
+        <View style={styles.appearanceRow}>
+          <View style={styles.appearanceIcon}>
+            <Ionicons
+              name={mode === "dark" ? "moon" : "sunny"}
+              size={20}
+              color={colors.primary}
+            />
+          </View>
+          <View style={styles.appearanceInfo}>
+            <AppText variant='h3'>Dark mode</AppText>
+            <AppText variant='caption'>
+              {mode === "dark"
+                ? "Dark theme is on."
+                : "Switch to a darker theme"}
+            </AppText>
+          </View>
+          <Switch
+            value={mode === "dark"}
+            onValueChange={(enabled) => setMode(enabled ? "dark" : "light")}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.onPrimary}
+            ios_backgroundColor={colors.border}
+          />
+        </View>
+      </Card>
+
       <Card style={styles.profileCard}>
         <View style={styles.avatar}>
-          <AppText variant="h2" color={Colors.onPrimary}>
+          <AppText variant='h2' color={colors.onPrimary}>
             {initialOf(user?.name)}
           </AppText>
         </View>
         <View style={styles.profileInfo}>
-          <AppText variant="h3" numberOfLines={1}>
+          <AppText variant='h3' numberOfLines={1}>
             {user?.name}
           </AppText>
-          <AppText variant="caption" numberOfLines={1}>
+          <AppText variant='caption' numberOfLines={1}>
             {user?.email}
           </AppText>
         </View>
       </Card>
 
       <Card style={styles.formCard}>
-        <AppText variant="h3" style={styles.formTitle}>
+        <AppText variant='h3' style={styles.formTitle}>
           Profile details
         </AppText>
 
-        {formError ? <Banner message={formError} type="error" style={styles.banner} /> : null}
+        {formError ? (
+          <Banner message={formError} type='error' style={styles.banner} />
+        ) : null}
 
         <View style={styles.fields}>
           <Input
-            label="Full name"
+            label='Full name'
             value={name}
             onChangeText={setName}
-            leftIcon="person-outline"
+            leftIcon='person-outline'
             error={errors.name}
           />
           <Input
-            label="Email"
+            label='Email'
             value={email}
             onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            leftIcon="mail-outline"
+            autoCapitalize='none'
+            keyboardType='email-address'
+            leftIcon='mail-outline'
             error={errors.email}
           />
           <Input
-            label="New password"
-            placeholder="Leave blank to keep current"
+            label='New password'
+            placeholder='Leave blank to keep current'
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            autoCapitalize="none"
-            leftIcon="lock-closed-outline"
+            autoCapitalize='none'
+            leftIcon='lock-closed-outline'
             error={errors.password}
           />
           <Select
-            label="Preferred currency"
+            label='Preferred currency'
             options={currencyOptions}
             value={currency}
             onChange={setCurrency}
-            icon="cash-outline"
+            icon='cash-outline'
             disabled={currenciesLoading}
-            placeholder={currenciesLoading ? 'Loading currencies...' : 'Choose a currency'}
-            sheetTitle="Currency"
+            placeholder={
+              currenciesLoading ? "Loading currencies..." : "Choose a currency"
+            }
+            sheetTitle='Currency'
           />
         </View>
 
         <Button
-          title="Save Changes"
+          title='Save Changes'
           onPress={handleSubmit}
           loading={updateUserMutation.isPending}
           disabled={updateUserMutation.isPending}
@@ -156,9 +204,9 @@ export function SettingsScreen() {
       </Card>
 
       <Button
-        title="Sign Out"
-        variant="danger"
-        icon="log-out-outline"
+        title='Sign Out'
+        variant='danger'
+        icon='log-out-outline'
         onPress={handleLogout}
         style={styles.logoutButton}
       />
@@ -166,28 +214,44 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInfo: { flex: 1 },
-  formCard: { marginBottom: Spacing.lg },
-  formTitle: { marginBottom: Spacing.lg },
-  banner: { marginBottom: Spacing.lg },
-  fields: { gap: Spacing.lg },
-  saveButton: { marginTop: Spacing.xl },
-  logoutButton: { marginBottom: Spacing.xxl },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    appearanceCard: { marginBottom: Spacing.lg },
+    appearanceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.lg,
+    },
+    appearanceIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: Radius.md,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    appearanceInfo: { flex: 1 },
+    profileCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.lg,
+      marginBottom: Spacing.lg,
+    },
+    avatar: {
+      width: 56,
+      height: 56,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    profileInfo: { flex: 1 },
+    formCard: { marginBottom: Spacing.lg },
+    formTitle: { marginBottom: Spacing.lg },
+    banner: { marginBottom: Spacing.lg },
+    fields: { gap: Spacing.lg },
+    saveButton: { marginTop: Spacing.xl },
+    logoutButton: { marginBottom: Spacing.xxl },
+  });
 
 export default SettingsScreen;

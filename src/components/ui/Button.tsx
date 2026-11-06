@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { Colors, Fonts, FontSize, Gradients, Radius, Spacing } from '../../theme';
+import { Fonts, FontSize, Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import AppText from './AppText';
 
-type Variant = 'primary' | 'outline' | 'ghost' | 'danger' | 'soft';
+type Variant = 'primary' | 'outline' | 'ghost' | 'danger' | 'success' | 'soft';
 type Size = 'sm' | 'md' | 'lg';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -38,14 +39,19 @@ export function Button({
   fullWidth = true,
   style,
 }: ButtonProps) {
+  const { colors, gradients } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   const isDisabled = disabled || loading;
   const height = HEIGHTS[size];
   const textColor =
     variant === 'primary'
-      ? Colors.onPrimary
+      ? colors.onPrimary
       : variant === 'danger'
-        ? Colors.danger
-        : Colors.primary;
+        ? colors.danger
+        : variant === 'success'
+          ? colors.success
+          : colors.primary;
 
   const content = (
     <View style={styles.content}>
@@ -77,6 +83,7 @@ export function Button({
     variant === 'ghost' ? styles.ghost : null,
     variant === 'soft' ? styles.soft : null,
     variant === 'danger' ? styles.danger : null,
+    variant === 'success' ? styles.success : null,
     isDisabled ? styles.disabled : null,
     fullWidth ? styles.fullWidth : null,
     style as ViewStyle,
@@ -90,7 +97,7 @@ export function Button({
         style={({ pressed }) => [containerStyle, pressed && !isDisabled ? styles.pressed : null]}
       >
         <LinearGradient
-          colors={Gradients.brand}
+          colors={gradients.brand}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.gradient, isDisabled ? styles.disabled : null]}
@@ -112,53 +119,57 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  fullWidth: {
-    width: '100%',
-  },
-  gradient: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  outline: {
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surface,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-  soft: {
-    backgroundColor: Colors.primarySoft,
-  },
-  danger: {
-    backgroundColor: 'rgba(224,69,90,0.10)',
-  },
-  disabled: {
-    opacity: 0.55,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  iconLeft: {
-    marginRight: Spacing.sm,
-  },
-  iconRight: {
-    marginLeft: Spacing.sm,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    base: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    fullWidth: {
+      width: '100%',
+    },
+    gradient: {
+      flex: 1,
+      width: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+    },
+    content: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    outline: {
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      backgroundColor: colors.surface,
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+    },
+    soft: {
+      backgroundColor: colors.primarySoft,
+    },
+    danger: {
+      backgroundColor: colors.dangerSoft,
+    },
+    success: {
+      backgroundColor: colors.successSoft,
+    },
+    disabled: {
+      opacity: 0.55,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    iconLeft: {
+      marginRight: Spacing.sm,
+    },
+    iconRight: {
+      marginLeft: Spacing.sm,
+    },
+  });
 
 export default Button;

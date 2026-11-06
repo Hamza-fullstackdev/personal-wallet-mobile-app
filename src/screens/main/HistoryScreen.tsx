@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
-  Badge,
   Banner,
   Button,
   Card,
@@ -16,11 +15,15 @@ import {
   Pagination,
   Screen,
   Select,
+  ToneBadge,
+  type BadgeTone,
   type SelectOption,
 } from '../../components/ui';
 import { useNotifications } from '../../hooks/useNotifications';
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { formatDateTime, toISODate } from '../../utils/format';
+import { toneColors, transactionMeta } from '../../utils/transactionMeta';
 import type { NotificationType } from '../../types';
 
 const LIMIT = 10;
@@ -33,12 +36,12 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   switch: 'Transfer',
 };
 
-const TYPE_ICONS: Record<NotificationType, React.ComponentProps<typeof Ionicons>['name']> = {
-  incoming: 'arrow-down-circle',
-  outgoing: 'arrow-up-circle',
-  loan: 'hand-left',
-  return: 'checkmark-done-circle',
-  switch: 'swap-horizontal',
+const TYPE_TONES: Record<NotificationType, BadgeTone> = {
+  incoming: 'incoming',
+  outgoing: 'outgoing',
+  loan: 'loan',
+  return: 'return',
+  switch: 'switch',
 };
 
 const SORT_OPTIONS: SelectOption[] = [
@@ -47,6 +50,10 @@ const SORT_OPTIONS: SelectOption[] = [
 ];
 
 export function HistoryScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const tones = toneColors(colors);
+
   const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -119,7 +126,6 @@ export function HistoryScreen() {
   return (
     <Screen
       title="History"
-      subtitle="Every transaction in one place"
       icon="time-outline"
       right={
         <Pressable
@@ -127,7 +133,7 @@ export function HistoryScreen() {
           style={[styles.filterButton, hasFilters ? styles.filterButtonActive : null]}
           hitSlop={8}
         >
-          <Ionicons name="options-outline" size={18} color={hasFilters ? Colors.onPrimary : Colors.primaryDeep} />
+          <Ionicons name="options-outline" size={18} color={hasFilters ? colors.onPrimary : colors.primaryDeep} />
         </Pressable>
       }
       refreshing={refreshing}
@@ -151,13 +157,9 @@ export function HistoryScreen() {
                 />
               </View>
             </View>
-            <View style={styles.filterRow}>
-              <View style={styles.filterHalf}>
-                <DateField label="From" value={fromDate} onChange={setFromDate} />
-              </View>
-              <View style={styles.filterHalf}>
-                <DateField label="To" value={toDate} onChange={setToDate} />
-              </View>
+            <View style={styles.dateRow}>
+              <DateField label="From" value={fromDate} onChange={setFromDate} />
+              <DateField label="To" value={toDate} onChange={setToDate} />
             </View>
           </View>
 
@@ -191,27 +193,31 @@ export function HistoryScreen() {
       ) : null}
 
       <View style={styles.list}>
-        {notifications.map((item) => (
-          <Card key={item._id} style={styles.notificationCard}>
-            <View style={styles.notificationRow}>
-              <View style={styles.typeIcon}>
-                <Ionicons name={TYPE_ICONS[item.type] ?? 'pricetag'} size={18} color={Colors.primary} />
-              </View>
-              <View style={styles.notificationBody}>
-                <AppText variant="body" weight="medium" numberOfLines={2}>
-                  {item.title}
-                </AppText>
-                <AppText variant="caption" numberOfLines={2} style={styles.notificationMessage}>
-                  {item.message}
-                </AppText>
-                <View style={styles.notificationFooter}>
-                  <Badge label={TYPE_LABELS[item.type] ?? 'Other'} />
-                  <AppText variant="caption">{formatDateTime(item.createdAt)}</AppText>
+        {notifications.map((item) => {
+          const meta = transactionMeta(item.type);
+          const tone = tones[meta.tone];
+          return (
+            <Card key={item._id} style={styles.notificationCard}>
+              <View style={styles.notificationRow}>
+                <View style={[styles.typeIcon, { backgroundColor: tone.bg }]}>
+                  <Ionicons name={meta.icon} size={18} color={tone.fg} />
+                </View>
+                <View style={styles.notificationBody}>
+                  <AppText variant="body" weight="medium" numberOfLines={2}>
+                    {item.title}
+                  </AppText>
+                  <AppText variant="caption" numberOfLines={2} style={styles.notificationMessage}>
+                    {item.message}
+                  </AppText>
+                  <View style={styles.notificationFooter}>
+                    <ToneBadge label={TYPE_LABELS[item.type] ?? 'Other'} tone={TYPE_TONES[item.type] ?? 'other'} />
+                    <AppText variant="caption">{formatDateTime(item.createdAt)}</AppText>
+                  </View>
                 </View>
               </View>
-            </View>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </View>
 
       {meta ? <Pagination page={meta.currentPage} totalPages={meta.totalPages} onChange={setPage} /> : null}
@@ -221,41 +227,42 @@ export function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterButtonActive: { backgroundColor: Colors.primary },
-  filtersCard: { marginBottom: Spacing.lg },
-  fields: { gap: Spacing.lg },
-  filterRow: { flexDirection: 'row', gap: Spacing.md },
-  filterHalf: { flex: 1 },
-  reset: { marginTop: Spacing.md, alignSelf: 'flex-start' },
-  summary: { marginBottom: Spacing.md },
-  list: { gap: Spacing.md },
-  notificationCard: { padding: Spacing.lg },
-  notificationRow: { flexDirection: 'row', gap: Spacing.md },
-  typeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationBody: { flex: 1 },
-  notificationMessage: { marginTop: 2 },
-  notificationFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.md,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    filterButton: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.md,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterButtonActive: { backgroundColor: colors.primary },
+    filtersCard: { marginBottom: Spacing.lg },
+    fields: { gap: Spacing.lg },
+    filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+    filterHalf: { flexGrow: 1, flexBasis: 148, minWidth: 0 },
+    dateRow: { gap: Spacing.md },
+    reset: { marginTop: Spacing.md, alignSelf: 'flex-start' },
+    summary: { marginBottom: Spacing.md },
+    list: { gap: Spacing.md },
+    notificationCard: { padding: Spacing.lg },
+    notificationRow: { flexDirection: 'row', gap: Spacing.md },
+    typeIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    notificationBody: { flex: 1 },
+    notificationMessage: { marginTop: 2 },
+    notificationFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: Spacing.md,
+    },
+  });
 
 export default HistoryScreen;

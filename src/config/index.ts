@@ -35,6 +35,8 @@ export const config = {
     authToken: 'personal-wallet.token',
     /** AsyncStorage key for persisted user profile. */
     authUser: 'personal-wallet.user',
+    /** AsyncStorage key for the persisted light/dark preference. */
+    themeMode: 'personal-wallet.theme',
   },
 };
 

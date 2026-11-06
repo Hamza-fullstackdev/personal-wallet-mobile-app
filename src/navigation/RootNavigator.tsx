@@ -1,55 +1,56 @@
-import { DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  type Theme,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { GlobalActivityOverlay } from '../components/GlobalActivityOverlay';
 import { Logo } from '../components/ui';
 import LoginScreen from '../screens/auth/LoginScreen';
 import { selectIsAuthenticated, useAuthStore } from '../store/authStore';
-import { Colors } from '../theme';
+import { useTheme } from '../theme/ThemeProvider';
 import MainTabs from './MainTabs';
 import type { RootStackParamList } from './types';
 
 const AuthStack = createNativeStackNavigator<RootStackParamList>();
 
-const navigationTheme: Theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: Colors.primary,
-    background: Colors.background,
-    card: Colors.surface,
-    text: Colors.textPrimary,
-    border: Colors.divider,
-    notification: Colors.primary,
-  },
-};
-
 export function RootNavigator() {
   const booted = useAuthStore((state) => state.booted);
   const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const { colors, mode } = useTheme();
 
-  const [routeChanging, setRouteChanging] = useState(false);
-  const routeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const firstChange = useRef(true);
+  const navigationTheme: Theme = useMemo(() => {
+    const base = mode === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.textPrimary,
+        border: colors.divider,
+        notification: colors.primary,
+      },
+    };
+  }, [mode, colors]);
 
-  const handleStateChange = useCallback(() => {
-    // Skip the very first state event fired while the container becomes ready.
-    if (firstChange.current) {
-      firstChange.current = false;
-      return;
-    }
-    setRouteChanging(true);
-    if (routeTimer.current) clearTimeout(routeTimer.current);
-    routeTimer.current = setTimeout(() => setRouteChanging(false), 420);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (routeTimer.current) clearTimeout(routeTimer.current);
-    },
-    [],
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: { flex: 1, backgroundColor: colors.background },
+        splash: {
+          flex: 1,
+          backgroundColor: colors.background,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      }),
+    [colors],
   );
 
   if (!booted) {
@@ -62,7 +63,7 @@ export function RootNavigator() {
 
   return (
     <View style={styles.root}>
-      <NavigationContainer theme={navigationTheme} onStateChange={handleStateChange}>
+      <NavigationContainer theme={navigationTheme}>
         {isAuthenticated ? (
           <MainTabs />
         ) : (
@@ -71,19 +72,9 @@ export function RootNavigator() {
           </AuthStack.Navigator>
         )}
       </NavigationContainer>
-      <GlobalActivityOverlay routeChanging={routeChanging} />
+      <GlobalActivityOverlay />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  splash: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default RootNavigator;

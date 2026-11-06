@@ -11,10 +11,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ReciteDuroodModal } from './src/components/ReciteDuroodModal';
 import { queryClient } from './src/lib/queryClient';
 import { useSessionGuard } from './src/hooks/useSessionGuard';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store/authStore';
+import { useThemeStore } from './src/store/themeStore';
 
 // Keep the native splash (configured in app.json) on screen until fonts load
 // and the stored session has been restored.
@@ -25,6 +27,9 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 export default function App() {
   const booted = useAuthStore((state) => state.booted);
   const bootstrap = useAuthStore((state) => state.bootstrap);
+  const themeMode = useThemeStore((state) => state.mode);
+  const themeHydrated = useThemeStore((state) => state.hydrated);
+  const markThemeHydrated = useThemeStore((state) => state.setHydrated);
 
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -51,18 +56,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (fontsLoaded && booted) {
+    if (fontsLoaded && booted && themeHydrated) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [fontsLoaded, booted]);
+  }, [fontsLoaded, booted, themeHydrated]);
 
-  if (!fontsLoaded || !booted) return null;
+  // Safety net: never keep the splash up if theme rehydration stalls.
+  useEffect(() => {
+    if (themeHydrated) return;
+    const timer = setTimeout(() => markThemeHydrated(), 800);
+    return () => clearTimeout(timer);
+  }, [themeHydrated, markThemeHydrated]);
+
+  if (!fontsLoaded || !booted || !themeHydrated) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
         <RootNavigator />
+        <ReciteDuroodModal />
       </SafeAreaProvider>
     </QueryClientProvider>
   );

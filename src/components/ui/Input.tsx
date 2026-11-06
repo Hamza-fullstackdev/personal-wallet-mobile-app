@@ -11,7 +11,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { Colors, Fonts, FontSize, Radius, Spacing } from '../../theme';
+import { Fonts, FontSize, Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import AppText from './AppText';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -42,6 +43,9 @@ export function Input({
   secureTextEntry,
   ...rest
 }: InputProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(Boolean(secureTextEntry));
   const focusAnim = useRef(new Animated.Value(0)).current;
@@ -60,14 +64,14 @@ export function Input({
 
   const borderColor = focusAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [error ? Colors.danger : Colors.border, error ? Colors.danger : Colors.primary],
+    outputRange: [error ? colors.danger : colors.border, error ? colors.danger : colors.primary],
   });
   const backgroundColor = focusAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [Colors.surfaceAlt, Colors.surface],
+    outputRange: [colors.surfaceAlt, colors.surface],
   });
 
-  const iconColor = focused ? Colors.primary : Colors.textMuted;
+  const iconColor = focused ? colors.primary : colors.textMuted;
 
   return (
     <View style={[styles.wrapper, containerStyle]}>
@@ -99,13 +103,13 @@ export function Input({
             setFocused(false);
             onBlur?.(event);
           }}
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           style={[styles.input, rest.multiline ? styles.multiline : null, style]}
         />
 
         {showToggle ? (
           <Pressable onPress={() => setHidden((value) => !value)} hitSlop={10} style={styles.rightIcon}>
-            <Ionicons name={hidden ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.textMuted} />
+            <Ionicons name={hidden ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textMuted} />
           </Pressable>
         ) : rightIcon ? (
           <Pressable
@@ -120,7 +124,7 @@ export function Input({
       </Animated.View>
 
       {error ? (
-        <AppText variant="caption" color={Colors.danger} style={styles.helper}>
+        <AppText variant="caption" color={colors.danger} style={styles.helper}>
           {error}
         </AppText>
       ) : hint ? (
@@ -132,62 +136,49 @@ export function Input({
   );
 }
 
-export const inputStyles = StyleSheet.create({
-  field: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 52,
-    justifyContent: 'center',
-  },
-  fieldFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surface,
-  },
-});
-
-const styles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
-  },
-  label: {
-    marginBottom: Spacing.sm,
-  },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 54,
-  },
-  fieldMultiline: {
-    alignItems: 'flex-start',
-    paddingVertical: Spacing.xs,
-  },
-  leftIcon: {
-    marginRight: Spacing.md,
-  },
-  rightIcon: {
-    marginLeft: Spacing.md,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    fontSize: FontSize.md,
-    fontFamily: Fonts.regular,
-    color: Colors.textPrimary,
-  },
-  multiline: {
-    minHeight: 92,
-    textAlignVertical: 'top',
-    paddingTop: Spacing.md,
-  },
-  helper: {
-    marginTop: Spacing.xs,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: {
+      width: '100%',
+    },
+    label: {
+      marginBottom: Spacing.sm,
+    },
+    field: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.lg,
+      minHeight: 54,
+    },
+    fieldMultiline: {
+      alignItems: 'flex-start',
+      paddingVertical: Spacing.xs,
+    },
+    leftIcon: {
+      marginRight: Spacing.md,
+    },
+    rightIcon: {
+      marginLeft: Spacing.md,
+    },
+    input: {
+      flex: 1,
+      paddingVertical: Spacing.md,
+      fontSize: FontSize.md,
+      fontFamily: Fonts.regular,
+      color: colors.textPrimary,
+    },
+    multiline: {
+      minHeight: 92,
+      textAlignVertical: 'top',
+      paddingTop: Spacing.md,
+    },
+    helper: {
+      marginTop: Spacing.xs,
+    },
+  });
 
 export default Input;

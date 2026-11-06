@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors, Radius, Spacing } from '../../theme';
-import { formatAmount } from '../../utils/format';
-import { TONE_COLORS, transactionMeta } from '../../utils/transactionMeta';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
+import { AMOUNT_MASK, formatAmount } from '../../utils/format';
+import { toneColors, transactionMeta } from '../../utils/transactionMeta';
 import type { StatementTransaction } from '../../types';
 import { AppText, EmptyState } from '../ui';
 
@@ -11,29 +12,50 @@ interface RecentActivityProps {
   transactions: StatementTransaction[];
   currency?: string;
   onViewAll?: () => void;
+  hidden?: boolean;
 }
 
-function amountInfo(t: StatementTransaction, currency: string) {
+function amountInfo(
+  t: StatementTransaction,
+  currency: string,
+  colors: ThemeColors,
+  hidden: boolean,
+) {
+  if (hidden) {
+    return {
+      text: AMOUNT_MASK,
+      color: t.credit > 0 ? colors.success : t.debit > 0 ? colors.danger : colors.textSecondary,
+    };
+  }
   if (t.credit > 0) {
-    return { text: `+ ${formatAmount(t.credit, currency)}`, color: Colors.success };
+    return { text: `+ ${formatAmount(t.credit, currency)}`, color: colors.success };
   }
   if (t.debit > 0) {
-    return { text: `- ${formatAmount(t.debit, currency)}`, color: Colors.danger };
+    return { text: `- ${formatAmount(t.debit, currency)}`, color: colors.danger };
   }
-  return { text: formatAmount(t.amount, currency), color: Colors.textSecondary };
+  return { text: formatAmount(t.amount, currency), color: colors.textSecondary };
 }
 
-export function RecentActivity({ transactions, currency = 'PKR', onViewAll }: RecentActivityProps) {
+export function RecentActivity({
+  transactions,
+  currency = 'PKR',
+  onViewAll,
+  hidden = false,
+}: RecentActivityProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const tones = toneColors(colors);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <AppText variant="h3">Recent activity</AppText>
         {onViewAll ? (
           <Pressable onPress={onViewAll} hitSlop={8} style={styles.viewAll}>
-            <AppText variant="caption" color={Colors.primary} weight="semiBold">
+            <AppText variant="caption" color={colors.primary} weight="semiBold">
               View all
             </AppText>
-            <Ionicons name="chevron-forward" size={14} color={Colors.primary} />
+            <Ionicons name="chevron-forward" size={14} color={colors.primary} />
           </Pressable>
         ) : null}
       </View>
@@ -48,8 +70,8 @@ export function RecentActivity({ transactions, currency = 'PKR', onViewAll }: Re
         <View style={styles.list}>
           {transactions.map((item) => {
             const meta = transactionMeta(item.type);
-            const tone = TONE_COLORS[meta.tone];
-            const amount = amountInfo(item, currency);
+            const tone = tones[meta.tone];
+            const amount = amountInfo(item, currency, colors, hidden);
             return (
               <View key={item.id} style={styles.row}>
                 <View style={[styles.icon, { backgroundColor: tone.bg }]}>
@@ -80,36 +102,37 @@ export function RecentActivity({ transactions, currency = 'PKR', onViewAll }: Re
   );
 }
 
-const styles = StyleSheet.create({
-  container: { gap: Spacing.md },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  viewAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  list: { gap: Spacing.sm },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.divider,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: { flex: 1 },
-  subtitle: { marginTop: 2 },
-  amount: { alignItems: 'flex-end', marginLeft: Spacing.sm },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { gap: Spacing.md },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    viewAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    list: { gap: Spacing.sm },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderRadius: Radius.lg,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+    },
+    icon: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    info: { flex: 1 },
+    subtitle: { marginTop: 2 },
+    amount: { alignItems: 'flex-end', marginLeft: Spacing.sm },
+  });
 
 export default RecentActivity;

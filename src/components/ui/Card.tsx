@@ -1,6 +1,7 @@
 import { StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 
-import { Colors, Radius, Shadows, Spacing } from '../../theme';
+import { Radius, Shadows, Spacing, type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/ThemeProvider';
 
 interface CardProps extends ViewProps {
   padded?: boolean;
@@ -9,6 +10,8 @@ interface CardProps extends ViewProps {
 }
 
 export function Card({ padded = true, elevated = true, style, children, ...rest }: CardProps) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View
       {...rest}
@@ -19,16 +22,17 @@ export function Card({ padded = true, elevated = true, style, children, ...rest 
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.divider,
-  },
-  padded: {
-    padding: Spacing.lg,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: colors.divider,
+    },
+    padded: {
+      padding: Spacing.lg,
+    },
+  });
 
 export default Card;

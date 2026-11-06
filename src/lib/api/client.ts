@@ -42,7 +42,9 @@ function extractMessage(data: unknown, status: number): string {
 
 export const http = axios.create({
   baseURL: config.apiBaseUrl,
-  timeout: 30000,
+  // Fail fast: a stuck request must never leave a loading overlay on screen for
+  // tens of seconds. Slow endpoints (e.g. PDF export) override this per request.
+  timeout: 15000,
   headers: { Accept: 'application/json' },
 });
 
@@ -55,7 +57,7 @@ http.interceptors.request.use((request: InternalAxiosRequestConfig) => {
   if (token && isTokenExpired(token)) {
     void signOut();
     return Promise.reject(
-      new ApiError(401, 'Your session has expired. Please sign in again.'),
+      new ApiError(401, 'Your session has expired. Please sign in again.', null, 'session-expired'),
     );
   }
 
@@ -77,19 +79,26 @@ http.interceptors.response.use(
       if (status === 401 || status === 403) {
         await useAuthStore.getState().signOut();
         return Promise.reject(
-          new ApiError(status, 'Your session has expired. Please sign in again.', data),
+          new ApiError(
+            status,
+            'Your session has expired. Please sign in again.',
+            data,
+            'unauthorized',
+          ),
         );
       }
 
       return Promise.reject(new ApiError(status, extractMessage(data, status), data));
     }
 
-    if (error.code === 'ECONNABORTED') {
-      return Promise.reject(new ApiError(0, 'The request timed out. Please try again.'));
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      return Promise.reject(
+        new ApiError(0, 'The request timed out. Please try again.', null, 'timeout'),
+      );
     }
 
     return Promise.reject(
-      new ApiError(0, 'Unable to reach the server. Check your connection.'),
+      new ApiError(0, 'Unable to reach the server. Check your connection.', null, 'network'),
     );
   },
 );

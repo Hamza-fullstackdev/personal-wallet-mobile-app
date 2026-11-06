@@ -8,7 +8,15 @@
 /** Currencies shown without decimal places. */
 const ZERO_DECIMAL = new Set(['PKR', 'JPY', 'KRW', 'VND', 'CLP', 'ISK']);
 
-export function formatAmount(value: number | null | undefined, currency = 'PKR'): string {
+/** Placeholder shown when amounts are hidden for privacy. */
+export const AMOUNT_MASK = '••••••';
+
+export function formatAmount(
+  value: number | null | undefined,
+  currency = 'PKR',
+  hidden = false,
+): string {
+  if (hidden) return AMOUNT_MASK;
   const amount = Number(value ?? 0);
   const safe = Number.isFinite(amount) ? amount : 0;
   const digits = ZERO_DECIMAL.has(currency.toUpperCase()) ? 0 : 2;

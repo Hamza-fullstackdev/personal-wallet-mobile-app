@@ -3,7 +3,7 @@ import { Screen } from '../../components/ui';
 
 export function AddCategoryScreen() {
   return (
-    <Screen title="New Category" subtitle="Create a wallet bucket">
+    <Screen title="New Category">
       <CategoryForm />
     </Screen>
   );

@@ -3,7 +3,7 @@ import { Screen } from '../../components/ui';
 
 export function GiveLoanScreen() {
   return (
-    <Screen title="Give Loan" subtitle="Lend money from a category">
+    <Screen title="Give Loan">
       <GiveLoanForm />
     </Screen>
   );

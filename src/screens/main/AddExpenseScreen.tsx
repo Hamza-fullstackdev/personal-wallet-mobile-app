@@ -3,7 +3,7 @@ import { Screen } from '../../components/ui';
 
 export function AddExpenseScreen() {
   return (
-    <Screen title="Add Expense" subtitle="Deduct from a category balance">
+    <Screen title="Add Expense">
       <BalanceEntryForm mode="outgoing" />
     </Screen>
   );

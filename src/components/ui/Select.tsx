@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Radius, Shadows, Spacing } from '../../theme';
+import { Radius, Shadows, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import AppText from './AppText';
 
 export interface SelectOption {
@@ -48,6 +49,9 @@ export function Select({
   icon,
   style,
 }: SelectProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -71,20 +75,20 @@ export function Select({
           style,
         ]}
       >
-        {icon ? <Ionicons name={icon} size={18} color={Colors.primary} style={styles.fieldIcon} /> : null}
+        {icon ? <Ionicons name={icon} size={18} color={colors.primary} style={styles.fieldIcon} /> : null}
         <AppText
           variant="body"
-          color={selected ? Colors.textPrimary : Colors.textMuted}
+          color={selected ? colors.textPrimary : colors.textMuted}
           numberOfLines={1}
           style={styles.fieldText}
         >
           {selected ? selected.label : placeholder}
         </AppText>
-        <Ionicons name="chevron-down" size={18} color={Colors.textMuted} />
+        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
       </Pressable>
 
       {error ? (
-        <AppText variant="caption" color={Colors.danger} style={styles.helper}>
+        <AppText variant="caption" color={colors.danger} style={styles.helper}>
           {error}
         </AppText>
       ) : null}
@@ -96,7 +100,7 @@ export function Select({
           <View style={styles.sheetHeader}>
             <AppText variant="h3">{sheetTitle ?? label ?? 'Select'}</AppText>
             <Pressable onPress={() => setOpen(false)} hitSlop={10} style={styles.closeButton}>
-              <Ionicons name="close" size={20} color={Colors.textSecondary} />
+              <Ionicons name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -109,7 +113,7 @@ export function Select({
                 }}
                 style={styles.option}
               >
-                <AppText variant="body" color={Colors.textMuted}>
+                <AppText variant="body" color={colors.textMuted}>
                   None
                 </AppText>
               </Pressable>
@@ -137,7 +141,7 @@ export function Select({
                     ) : null}
                   </View>
                   {isSelected ? (
-                    <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
+                    <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
                   ) : null}
                 </Pressable>
               );
@@ -155,73 +159,74 @@ export function Select({
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { width: '100%' },
-  label: { marginBottom: Spacing.sm },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 54,
-  },
-  fieldPressed: { borderColor: Colors.primaryLight },
-  fieldError: { borderColor: Colors.danger },
-  disabled: { opacity: 0.55 },
-  fieldIcon: { marginRight: Spacing.md },
-  fieldText: { flex: 1, marginRight: Spacing.sm },
-  helper: { marginTop: Spacing.xs },
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: { width: '100%' },
+    label: { marginBottom: Spacing.sm },
+    field: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.lg,
+      minHeight: 54,
+    },
+    fieldPressed: { borderColor: colors.primaryLight },
+    fieldError: { borderColor: colors.danger },
+    disabled: { opacity: 0.55 },
+    fieldIcon: { marginRight: Spacing.md },
+    fieldText: { flex: 1, marginRight: Spacing.sm },
+    helper: { marginTop: Spacing.xs },
 
-  backdrop: { flex: 1, backgroundColor: 'rgba(33, 29, 56, 0.4)' },
-  sheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    maxHeight: '70%',
-    ...Shadows.card,
-  },
-  grabber: {
-    alignSelf: 'center',
-    width: 44,
-    height: 5,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.border,
-    marginBottom: Spacing.md,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
-  },
-  closeButton: {
-    width: 34,
-    height: 34,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetList: { marginTop: Spacing.xs },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xs,
-  },
-  optionSelected: { backgroundColor: Colors.primarySoft },
-  optionTextWrap: { flex: 1, marginRight: Spacing.md },
-  optionDescription: { marginTop: 2 },
-  noOptions: { paddingVertical: Spacing.xl },
-});
+    backdrop: { flex: 1, backgroundColor: colors.backdrop },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      maxHeight: '70%',
+      ...Shadows.card,
+    },
+    grabber: {
+      alignSelf: 'center',
+      width: 44,
+      height: 5,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.border,
+      marginBottom: Spacing.md,
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.sm,
+    },
+    closeButton: {
+      width: 34,
+      height: 34,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sheetList: { marginTop: Spacing.xs },
+    option: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: Spacing.lg,
+      paddingHorizontal: Spacing.md,
+      borderRadius: Radius.md,
+      marginBottom: Spacing.xs,
+    },
+    optionSelected: { backgroundColor: colors.primarySoft },
+    optionTextWrap: { flex: 1, marginRight: Spacing.md },
+    optionDescription: { marginTop: 2 },
+    noOptions: { paddingVertical: Spacing.xl },
+  });
 
 export default Select;

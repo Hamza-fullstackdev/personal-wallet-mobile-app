@@ -3,7 +3,7 @@ import { Screen } from '../../components/ui';
 
 export function SwitchBalanceScreen() {
   return (
-    <Screen title="Switch Balance" subtitle="Move money between categories">
+    <Screen title="Switch Balance">
       <SwitchBalanceForm />
     </Screen>
   );

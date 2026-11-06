@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import AppText from './AppText';
 
 interface PaginationProps {
@@ -19,6 +20,9 @@ function pageWindow(page: number, totalPages: number): number[] {
 }
 
 export function Pagination({ page, totalPages, onChange }: PaginationProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   if (totalPages <= 1) return null;
 
   const pages = pageWindow(page, totalPages);
@@ -32,7 +36,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         disabled={!canPrev}
         style={[styles.nav, !canPrev ? styles.disabled : null]}
       >
-        <Ionicons name="chevron-back" size={18} color={canPrev ? Colors.primary : Colors.textMuted} />
+        <Ionicons name="chevron-back" size={18} color={canPrev ? colors.primary : colors.textMuted} />
       </Pressable>
 
       {pages.map((item) => {
@@ -43,7 +47,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
             onPress={() => onChange(item)}
             style={[styles.page, active ? styles.pageActive : null]}
           >
-            <AppText variant="caption" weight="semiBold" color={active ? Colors.onPrimary : Colors.textSecondary}>
+            <AppText variant="caption" weight="semiBold" color={active ? colors.onPrimary : colors.textSecondary}>
               {String(item)}
             </AppText>
           </Pressable>
@@ -55,44 +59,45 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
         disabled={!canNext}
         style={[styles.nav, !canNext ? styles.disabled : null]}
       >
-        <Ionicons name="chevron-forward" size={18} color={canNext ? Colors.primary : Colors.textMuted} />
+        <Ionicons name="chevron-forward" size={18} color={canNext ? colors.primary : colors.textMuted} />
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.lg,
-  },
-  nav: {
-    width: 38,
-    height: 38,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  disabled: { opacity: 0.45 },
-  page: {
-    minWidth: 38,
-    height: 38,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pageActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      paddingVertical: Spacing.lg,
+    },
+    nav: {
+      width: 38,
+      height: 38,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    disabled: { opacity: 0.45 },
+    page: {
+      minWidth: 38,
+      height: 38,
+      paddingHorizontal: Spacing.sm,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pageActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+  });
 
 export default Pagination;

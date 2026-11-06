@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 
-import { Colors } from '../theme';
+import type { ThemeColors } from '../theme';
 
 export type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 export type TransactionTone = 'in' | 'out' | 'neutral';
@@ -24,8 +24,11 @@ export function transactionMeta(type?: string | null): TransactionMeta {
   return META[type ?? 'other'] ?? META.other;
 }
 
-export const TONE_COLORS: Record<TransactionTone, { fg: string; bg: string }> = {
-  in: { fg: Colors.success, bg: 'rgba(78,120,247,0.12)' },
-  out: { fg: Colors.danger, bg: 'rgba(224,69,90,0.10)' },
-  neutral: { fg: Colors.primary, bg: Colors.primarySoft },
-};
+/** Green for money in, red for money out, brand-neutral for transfers. */
+export function toneColors(colors: ThemeColors): Record<TransactionTone, { fg: string; bg: string }> {
+  return {
+    in: { fg: colors.success, bg: colors.successSoft },
+    out: { fg: colors.danger, bg: colors.dangerSoft },
+    neutral: { fg: colors.primary, bg: colors.primarySoft },
+  };
+}

@@ -23,7 +23,8 @@ import { useLoans } from '../../hooks/useLoans';
 import { useReturnLoan } from '../../hooks/useWalletMutations';
 import { useCategories } from '../../hooks/useCategories';
 import { useAuthStore } from '../../store/authStore';
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { formatAmount, formatDate, toISODate } from '../../utils/format';
 import type { Loan } from '../../types';
 
@@ -41,6 +42,8 @@ const SORT_OPTIONS: SelectOption[] = [
 ];
 
 export function LoansScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const currency = useAuthStore((state) => state.user?.currency ?? 'PKR');
   const { categories } = useCategories();
 
@@ -128,7 +131,6 @@ export function LoansScreen() {
   return (
     <Screen
       title="Loans"
-      subtitle="Track money you have lent out"
       icon="hand-left-outline"
       right={
         <Pressable
@@ -139,7 +141,7 @@ export function LoansScreen() {
           <Ionicons
             name="options-outline"
             size={18}
-            color={hasFilters ? Colors.onPrimary : Colors.primaryDeep}
+            color={hasFilters ? colors.onPrimary : colors.primaryDeep}
           />
         </Pressable>
       }
@@ -175,13 +177,9 @@ export function LoansScreen() {
                 />
               </View>
             </View>
-            <View style={styles.filterRow}>
-              <View style={styles.filterHalf}>
-                <DateField label="From" value={fromDate} onChange={setFromDate} />
-              </View>
-              <View style={styles.filterHalf}>
-                <DateField label="To" value={toDate} onChange={setToDate} />
-              </View>
+            <View style={styles.dateRow}>
+              <DateField label="From" value={fromDate} onChange={setFromDate} />
+              <DateField label="To" value={toDate} onChange={setToDate} />
             </View>
           </View>
 
@@ -228,12 +226,12 @@ export function LoansScreen() {
               </View>
               <Badge
                 label={loan.status === 'returned' ? 'Returned' : 'Pending'}
-                color={loan.status === 'returned' ? Colors.primaryDeep : Colors.primary}
-                background={loan.status === 'returned' ? Colors.primaryFaint : Colors.primarySoft}
+                color={loan.status === 'returned' ? colors.success : colors.danger}
+                background={loan.status === 'returned' ? colors.successSoft : colors.dangerSoft}
               />
             </View>
 
-            <AppText variant="h2" color={Colors.primaryDeep} style={styles.loanAmount}>
+            <AppText variant="h2" color={colors.primaryDeep} style={styles.loanAmount}>
               {currency} {formatAmount(loan.balance, currency)}
             </AppText>
 
@@ -279,7 +277,7 @@ export function LoansScreen() {
           <View style={styles.sheetHeader}>
             <AppText variant="h3">Return loan</AppText>
             <Pressable onPress={() => setReturnTarget(null)} hitSlop={8}>
-              <Ionicons name="close" size={22} color={Colors.textSecondary} />
+              <Ionicons name="close" size={22} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -302,6 +300,7 @@ export function LoansScreen() {
 
               <Button
                 title="Confirm Return"
+                variant="success"
                 onPress={confirmReturn}
                 loading={returnLoanMutation.isPending}
                 disabled={returnLoanMutation.isPending || !returnCategory}
@@ -315,55 +314,57 @@ export function LoansScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterButtonActive: { backgroundColor: Colors.primary },
-  filtersCard: { marginBottom: Spacing.lg },
-  fields: { gap: Spacing.lg },
-  filterRow: { flexDirection: 'row', gap: Spacing.md },
-  filterHalf: { flex: 1 },
-  reset: { marginTop: Spacing.md, alignSelf: 'flex-start' },
-  summary: { marginBottom: Spacing.md },
-  list: { gap: Spacing.md },
-  loanCard: { padding: Spacing.lg },
-  loanHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
-  loanNameWrap: { flex: 1 },
-  loanReason: { marginTop: 2 },
-  loanAmount: { marginTop: Spacing.md },
-  loanMeta: {
-    flexDirection: 'row',
-    gap: Spacing.xl,
-    marginTop: Spacing.md,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-  },
-  metaItem: { flex: 1, gap: 2 },
-  returnButton: { marginTop: Spacing.lg },
-  backdrop: { flex: 1, backgroundColor: 'rgba(33,29,56,0.4)' },
-  sheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-  },
-  sheetBody: { gap: Spacing.md },
-  sheetHint: { marginBottom: Spacing.sm },
-  sheetButton: { marginTop: Spacing.md },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    filterButton: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.md,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterButtonActive: { backgroundColor: colors.primary },
+    filtersCard: { marginBottom: Spacing.lg },
+    fields: { gap: Spacing.lg },
+    filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+    filterHalf: { flexGrow: 1, flexBasis: 148, minWidth: 0 },
+    dateRow: { gap: Spacing.md },
+    reset: { marginTop: Spacing.md, alignSelf: 'flex-start' },
+    summary: { marginBottom: Spacing.md },
+    list: { gap: Spacing.md },
+    loanCard: { padding: Spacing.lg },
+    loanHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
+    loanNameWrap: { flex: 1 },
+    loanReason: { marginTop: 2 },
+    loanAmount: { marginTop: Spacing.md },
+    loanMeta: {
+      flexDirection: 'row',
+      gap: Spacing.xl,
+      marginTop: Spacing.md,
+      paddingTop: Spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    metaItem: { flex: 1, gap: 2 },
+    returnButton: { marginTop: Spacing.lg },
+    backdrop: { flex: 1, backgroundColor: colors.backdrop },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl,
+      padding: Spacing.xl,
+      paddingBottom: Spacing.xxxl,
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.lg,
+    },
+    sheetBody: { gap: Spacing.md },
+    sheetHint: { marginBottom: Spacing.sm },
+    sheetButton: { marginTop: Spacing.md },
+  });
 
 export default LoansScreen;

@@ -11,13 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Colors, Spacing } from '../../theme';
+import { Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import AppHeader from './AppHeader';
 
 interface ScreenProps {
   children: React.ReactNode;
   title?: string;
-  subtitle?: string;
   icon?: React.ComponentProps<typeof Ionicons>['name'];
   right?: React.ReactNode;
   /** Show a back arrow in the header. Defaults to true when the screen can go back. */
@@ -38,7 +38,6 @@ interface ScreenProps {
 export function Screen({
   children,
   title,
-  subtitle,
   icon,
   right,
   showBack,
@@ -56,12 +55,13 @@ export function Screen({
   const navigation = useNavigation<{ canGoBack: () => boolean; goBack: () => void }>();
   const canGoBack = navigation.canGoBack?.();
   const withBack = showBack ?? canGoBack;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   const header =
     title || withBack || right ? (
       <AppHeader
         title={title}
-        subtitle={subtitle}
         icon={icon}
         right={right}
         onBack={withBack ? () => navigation.goBack() : undefined}
@@ -73,6 +73,7 @@ export function Screen({
       style={styles.scroll}
       contentContainerStyle={[
         padded && styles.padded,
+        header && styles.bodySpacing,
         center && styles.center,
         contentContainerStyle,
       ]}
@@ -84,8 +85,8 @@ export function Screen({
           <RefreshControl
             refreshing={Boolean(refreshing)}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         ) : undefined
       }
@@ -93,7 +94,15 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.flex, padded && styles.padded, center && styles.center, contentContainerStyle]}>
+    <View
+      style={[
+        styles.flex,
+        padded && styles.padded,
+        header && styles.bodySpacing,
+        center && styles.center,
+        contentContainerStyle,
+      ]}
+    >
       {children}
     </View>
   );
@@ -113,29 +122,34 @@ export function Screen({
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  flex: { flex: 1 },
-  scroll: { flex: 1 },
-  padded: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
-  },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-    backgroundColor: Colors.background,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    flex: { flex: 1 },
+    scroll: { flex: 1 },
+    padded: {
+      paddingHorizontal: Spacing.xl,
+      paddingBottom: Spacing.xxxl,
+    },
+    /** Breathing room between the app header and the screen body. */
+    bodySpacing: {
+      paddingTop: Spacing.xxl,
+    },
+    center: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    footer: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+      backgroundColor: colors.background,
+    },
+  });
 
 export default Screen;

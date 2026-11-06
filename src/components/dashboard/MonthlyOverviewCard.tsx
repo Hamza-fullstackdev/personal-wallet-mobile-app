@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
-import { Colors, Radius, Spacing } from '../../theme';
+import { Radius, Spacing, type ThemeColors } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { formatAmount } from '../../utils/format';
 import type { StatementSummary } from '../../types';
 import { AppText, Badge, Card } from '../ui';
@@ -11,6 +12,7 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 interface MonthlyOverviewCardProps {
   summary?: StatementSummary | null;
   currency?: string;
+  hidden?: boolean;
 }
 
 interface StatProps {
@@ -21,6 +23,7 @@ interface StatProps {
 }
 
 function Stat({ icon, label, value, color }: StatProps) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.stat}>
       <View style={[styles.statIcon, { backgroundColor: `${color}1A` }]}>
@@ -36,7 +39,14 @@ function Stat({ icon, label, value, color }: StatProps) {
   );
 }
 
-export function MonthlyOverviewCard({ summary, currency = 'PKR' }: MonthlyOverviewCardProps) {
+export function MonthlyOverviewCard({
+  summary,
+  currency = 'PKR',
+  hidden = false,
+}: MonthlyOverviewCardProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   const income = summary?.totalIncoming ?? 0;
   const expense = summary?.totalOutgoing ?? 0;
   const net = summary?.netCashFlow ?? 0;
@@ -60,8 +70,8 @@ export function MonthlyOverviewCard({ summary, currency = 'PKR' }: MonthlyOvervi
         </View>
         <Badge
           label={surplus ? 'Surplus' : 'Deficit'}
-          color={surplus ? Colors.success : Colors.danger}
-          background={surplus ? 'rgba(78,120,247,0.12)' : 'rgba(224,69,90,0.10)'}
+          color={surplus ? colors.success : colors.danger}
+          background={surplus ? colors.successSoft : colors.dangerSoft}
         />
       </View>
 
@@ -69,22 +79,22 @@ export function MonthlyOverviewCard({ summary, currency = 'PKR' }: MonthlyOvervi
         <Stat
           icon="arrow-down-circle"
           label="Income"
-          value={formatAmount(income, currency)}
-          color={Colors.success}
+          value={formatAmount(income, currency, hidden)}
+          color={colors.success}
         />
         <View style={styles.statDivider} />
         <Stat
           icon="arrow-up-circle"
           label="Expense"
-          value={formatAmount(expense, currency)}
-          color={Colors.danger}
+          value={formatAmount(expense, currency, hidden)}
+          color={colors.danger}
         />
         <View style={styles.statDivider} />
         <Stat
           icon={surplus ? 'trending-up' : 'trending-down'}
           label="Net flow"
-          value={formatAmount(net, currency)}
-          color={surplus ? Colors.primary : Colors.danger}
+          value={formatAmount(net, currency, hidden)}
+          color={surplus ? colors.success : colors.danger}
         />
       </View>
 
@@ -104,15 +114,15 @@ export function MonthlyOverviewCard({ summary, currency = 'PKR' }: MonthlyOvervi
           <AppText variant="caption">{count} transactions</AppText>
         </View>
         <View style={styles.footerItem}>
-          <Ionicons name="hand-left-outline" size={13} color={Colors.textMuted} />
+          <Ionicons name="hand-left-outline" size={13} color={colors.textMuted} />
           <AppText variant="caption" style={styles.footerLabel}>
-            {formatAmount(loansGiven, currency)} given
+            {formatAmount(loansGiven, currency, hidden)} given
           </AppText>
         </View>
         <View style={styles.footerItem}>
-          <Ionicons name="checkmark-done-outline" size={13} color={Colors.textMuted} />
+          <Ionicons name="checkmark-done-outline" size={13} color={colors.textMuted} />
           <AppText variant="caption" style={styles.footerLabel}>
-            {formatAmount(loansReturned, currency)} back
+            {formatAmount(loansReturned, currency, hidden)} back
           </AppText>
         </View>
       </View>
@@ -120,52 +130,53 @@ export function MonthlyOverviewCard({ summary, currency = 'PKR' }: MonthlyOvervi
   );
 }
 
-const styles = StyleSheet.create({
-  card: { gap: Spacing.lg },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerText: { flex: 1, marginRight: Spacing.md },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stat: { flex: 1, gap: 2 },
-  statIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  statValue: { marginTop: 1 },
-  statDivider: {
-    width: 1,
-    height: 44,
-    backgroundColor: Colors.divider,
-    marginHorizontal: Spacing.md,
-  },
-  track: {
-    flexDirection: 'row',
-    height: 8,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.primaryFaint,
-    overflow: 'hidden',
-  },
-  incomeBar: { height: '100%', backgroundColor: Colors.success },
-  expenseBar: { height: '100%', backgroundColor: Colors.danger },
-  emptyBar: { flex: 1, backgroundColor: Colors.divider },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: Spacing.lg,
-  },
-  footerItem: { flexDirection: 'row', alignItems: 'center' },
-  footerLabel: { marginLeft: Spacing.xs },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: { gap: Spacing.lg },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    headerText: { flex: 1, marginRight: Spacing.md },
+    statsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    stat: { flex: 1, gap: 2 },
+    statIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: Radius.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: Spacing.xs,
+    },
+    statValue: { marginTop: 1 },
+    statDivider: {
+      width: 1,
+      height: 44,
+      backgroundColor: colors.divider,
+      marginHorizontal: Spacing.md,
+    },
+    track: {
+      flexDirection: 'row',
+      height: 8,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.surfaceAlt,
+      overflow: 'hidden',
+    },
+    incomeBar: { height: '100%', backgroundColor: colors.success },
+    expenseBar: { height: '100%', backgroundColor: colors.danger },
+    emptyBar: { flex: 1, backgroundColor: colors.divider },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: Spacing.lg,
+    },
+    footerItem: { flexDirection: 'row', alignItems: 'center' },
+    footerLabel: { marginLeft: Spacing.xs },
+  });
 
 export default MonthlyOverviewCard;
