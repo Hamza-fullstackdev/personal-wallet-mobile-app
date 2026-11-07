@@ -1,5 +1,7 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+import type { Todo } from '../types';
+
 export type HomeStackParamList = {
   Dashboard: undefined;
   AddIncome: undefined;
@@ -9,10 +11,17 @@ export type HomeStackParamList = {
   GiveLoan: undefined;
   Statement: undefined;
   Loans: undefined;
+  ExpenseCalendar: undefined;
+  Charts: undefined;
 };
 
 export type LoansStackParamList = {
   Loans: undefined;
+};
+
+export type TodosStackParamList = {
+  Todos: undefined;
+  TodoForm: { todo?: Todo } | undefined;
 };
 
 export type HistoryStackParamList = {
@@ -26,6 +35,7 @@ export type MoreStackParamList = {
 export type MainTabParamList = {
   HomeTab: NavigatorScreenParams<HomeStackParamList> | undefined;
   LoansTab: NavigatorScreenParams<LoansStackParamList> | undefined;
+  TodosTab: NavigatorScreenParams<TodosStackParamList> | undefined;
   HistoryTab: NavigatorScreenParams<HistoryStackParamList> | undefined;
   MoreTab: NavigatorScreenParams<MoreStackParamList> | undefined;
 };

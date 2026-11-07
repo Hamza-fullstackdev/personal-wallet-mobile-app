@@ -12,6 +12,7 @@ interface RecentActivityProps {
   transactions: StatementTransaction[];
   currency?: string;
   onViewAll?: () => void;
+  onPressItem?: (transaction: StatementTransaction) => void;
   hidden?: boolean;
 }
 
@@ -40,6 +41,7 @@ export function RecentActivity({
   transactions,
   currency = 'PKR',
   onViewAll,
+  onPressItem,
   hidden = false,
 }: RecentActivityProps) {
   const { colors } = useTheme();
@@ -73,7 +75,15 @@ export function RecentActivity({
             const tone = tones[meta.tone];
             const amount = amountInfo(item, currency, colors, hidden);
             return (
-              <View key={item.id} style={styles.row}>
+              <Pressable
+                key={item.id}
+                onPress={() => onPressItem?.(item)}
+                disabled={!onPressItem}
+                style={({ pressed }) => [
+                  styles.row,
+                  pressed && onPressItem ? styles.rowPressed : null,
+                ]}
+              >
                 <View style={[styles.icon, { backgroundColor: tone.bg }]}>
                   <Ionicons name={meta.icon} size={18} color={tone.fg} />
                 </View>
@@ -93,7 +103,10 @@ export function RecentActivity({
                     {meta.label}
                   </AppText>
                 </View>
-              </View>
+                {onPressItem ? (
+                  <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+                ) : null}
+              </Pressable>
             );
           })}
         </View>
@@ -123,6 +136,7 @@ const createStyles = (colors: ThemeColors) =>
       paddingVertical: Spacing.md,
       paddingHorizontal: Spacing.lg,
     },
+    rowPressed: { opacity: 0.85 },
     icon: {
       width: 40,
       height: 40,

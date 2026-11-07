@@ -69,7 +69,13 @@ export interface Loan {
   updatedAt?: string;
 }
 
-export type NotificationType = 'incoming' | 'outgoing' | 'loan' | 'return' | 'switch';
+export type NotificationType =
+  | 'incoming'
+  | 'outgoing'
+  | 'loan'
+  | 'return'
+  | 'switch'
+  | 'investment';
 
 export interface Notification {
   _id: string;
@@ -79,6 +85,22 @@ export interface Notification {
   userId: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export type ReceiptDirection = 'in' | 'out' | 'neutral';
+
+export interface ReceiptData {
+  id: string;
+  type: string;
+  typeLabel: string;
+  direction: ReceiptDirection;
+  amount: number;
+  title: string;
+  description?: string;
+  descriptionLabel?: string;
+  date: string;
+  reference: string;
+  runningBalance?: number;
 }
 
 export interface PaginationMeta {
@@ -110,6 +132,46 @@ export interface CurrenciesResponse {
   currencies: Currencie[];
 }
 
+export type TodoStatus = 'pending' | 'completed';
+
+export interface Todo {
+  _id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  targetAmount?: number;
+  targetDate?: string | null;
+  status: TodoStatus;
+  spentAmount?: number;
+  categoryId?: string | null;
+  completedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TodosResponse {
+  todos: Todo[];
+  meta: PaginationMeta;
+  filters?: { statuses: TodoStatus[] };
+}
+
+export type ExpenseType = 'outgoing' | 'investment' | 'incoming';
+
+export interface Expense {
+  id: string;
+  date: string;
+  amount: number;
+  type: ExpenseType;
+  category: string;
+  title: string;
+  description: string;
+}
+
+export interface ExpensesResponse {
+  expenses: Expense[];
+  period: { startDate: string; endDate: string };
+}
+
 /* ───────────────────────── Bank statement ───────────────────────── */
 
 export interface StatementPeriod {
@@ -138,7 +200,14 @@ export interface StatementCategory {
   balance: number;
 }
 
-export type TransactionType = 'incoming' | 'outgoing' | 'loan' | 'return' | 'switch' | 'other';
+export type TransactionType =
+  | 'incoming'
+  | 'outgoing'
+  | 'loan'
+  | 'return'
+  | 'switch'
+  | 'investment'
+  | 'other';
 
 export interface StatementTransaction {
   id: string;

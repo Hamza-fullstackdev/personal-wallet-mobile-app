@@ -17,6 +17,7 @@ const META: Record<string, TransactionMeta> = {
   loan: { label: 'Loan Given', icon: 'hand-left', tone: 'out' },
   return: { label: 'Loan Returned', icon: 'checkmark-done-circle', tone: 'in' },
   switch: { label: 'Transfer', icon: 'swap-horizontal', tone: 'neutral' },
+  investment: { label: 'Investment', icon: 'trending-up', tone: 'out' },
   other: { label: 'Transaction', icon: 'pricetag', tone: 'neutral' },
 };
 

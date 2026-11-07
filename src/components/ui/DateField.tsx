@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  type DateTimePickerChangeEvent,
+} from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import {
   Modal,
@@ -77,13 +79,19 @@ export function DateField({
     onChange(null);
   };
 
-  const handleAndroidChange = (event: DateTimePickerEvent, date?: Date) => {
+  const handleAndroidValueChange = (
+    _event: DateTimePickerChangeEvent,
+    date: Date,
+  ) => {
     setShow(false);
-    if (event.type === 'set' && date) onChange(date);
+    onChange(date);
   };
 
-  const handleIosChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (date) setDraft(date);
+  const handleIosValueChange = (
+    _event: DateTimePickerChangeEvent,
+    date: Date,
+  ) => {
+    setDraft(date);
   };
 
   const displayValue = value ? formatDate(value) : placeholder;
@@ -144,7 +152,8 @@ export function DateField({
           mode="date"
           display="calendar"
           firstDayOfWeek={1}
-          onChange={handleAndroidChange}
+          onValueChange={handleAndroidValueChange}
+          onDismiss={close}
           minimumDate={minimumDate}
           maximumDate={maximumDate}
         />
@@ -186,7 +195,7 @@ export function DateField({
               value={draft}
               mode="date"
               display="spinner"
-              onChange={handleIosChange}
+              onValueChange={handleIosValueChange}
               minimumDate={minimumDate}
               maximumDate={maximumDate}
               themeVariant={mode}

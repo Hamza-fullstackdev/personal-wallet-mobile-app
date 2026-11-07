@@ -9,6 +9,14 @@ export const queryKeys = {
     all: ['loans'] as const,
     list: (filters: Filters) => ['loans', filters] as const,
   },
+  todos: {
+    all: ['todos'] as const,
+    list: (filters: Filters) => ['todos', filters] as const,
+  },
+  expenses: {
+    all: ['expenses'] as const,
+    list: (filters: Filters) => ['expenses', filters] as const,
+  },
   notifications: {
     all: ['notifications'] as const,
     list: (filters: Filters) => ['notifications', filters] as const,

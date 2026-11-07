@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ReciteDuroodModal } from './src/components/ReciteDuroodModal';
+import { ReceiptProvider } from './src/components/receipt/ReceiptProvider';
 import { queryClient } from './src/lib/queryClient';
 import { useSessionGuard } from './src/hooks/useSessionGuard';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -74,7 +75,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
-        <RootNavigator />
+        <ReceiptProvider>
+          <RootNavigator />
+        </ReceiptProvider>
         <ReciteDuroodModal />
       </SafeAreaProvider>
     </QueryClientProvider>

@@ -11,6 +11,7 @@ import type {
   LoansStackParamList,
   MainTabParamList,
   MoreStackParamList,
+  TodosStackParamList,
 } from './types';
 import DashboardScreen from '../screens/main/DashboardScreen';
 import AddIncomeScreen from '../screens/main/AddIncomeScreen';
@@ -20,13 +21,18 @@ import SwitchBalanceScreen from '../screens/main/SwitchBalanceScreen';
 import GiveLoanScreen from '../screens/main/GiveLoanScreen';
 import StatementScreen from '../screens/main/StatementScreen';
 import LoansScreen from '../screens/main/LoansScreen';
+import TodosScreen from '../screens/main/TodosScreen';
+import TodoFormScreen from '../screens/main/TodoFormScreen';
 import HistoryScreen from '../screens/main/HistoryScreen';
+import ExpenseCalendarScreen from '../screens/main/ExpenseCalendarScreen';
+import ChartsScreen from '../screens/main/ChartsScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const LoansStack = createNativeStackNavigator<LoansStackParamList>();
+const TodosStack = createNativeStackNavigator<TodosStackParamList>();
 const HistoryStack = createNativeStackNavigator<HistoryStackParamList>();
 const MoreStack = createNativeStackNavigator<MoreStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -52,6 +58,8 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="GiveLoan" component={GiveLoanScreen} />
       <HomeStack.Screen name="Statement" component={StatementScreen} />
       <HomeStack.Screen name="Loans" component={LoansScreen} />
+      <HomeStack.Screen name="ExpenseCalendar" component={ExpenseCalendarScreen} />
+      <HomeStack.Screen name="Charts" component={ChartsScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -71,6 +79,25 @@ function LoansStackNavigator() {
     <LoansStack.Navigator screenOptions={screenOptions}>
       <LoansStack.Screen name="Loans" component={LoansScreen} />
     </LoansStack.Navigator>
+  );
+}
+
+function TodosStackNavigator() {
+  const { colors } = useTheme();
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: 'slide_from_right' as const,
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors.background],
+  );
+
+  return (
+    <TodosStack.Navigator screenOptions={screenOptions}>
+      <TodosStack.Screen name="Todos" component={TodosScreen} />
+      <TodosStack.Screen name="TodoForm" component={TodoFormScreen} />
+    </TodosStack.Navigator>
   );
 }
 
@@ -113,6 +140,7 @@ function MoreStackNavigator() {
 const TAB_ICONS: Record<keyof MainTabParamList, IoniconName> = {
   HomeTab: 'home',
   LoansTab: 'hand-left',
+  TodosTab: 'flag',
   HistoryTab: 'time',
   MoreTab: 'settings',
 };
@@ -156,6 +184,7 @@ export function MainTabs() {
     >
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: 'Home' }} />
       <Tab.Screen name="LoansTab" component={LoansStackNavigator} options={{ title: 'Loans' }} />
+      <Tab.Screen name="TodosTab" component={TodosStackNavigator} options={{ title: 'Todos' }} />
       <Tab.Screen name="HistoryTab" component={HistoryStackNavigator} options={{ title: 'History' }} />
       <Tab.Screen name="MoreTab" component={MoreStackNavigator} options={{ title: 'Settings' }} />
     </Tab.Navigator>

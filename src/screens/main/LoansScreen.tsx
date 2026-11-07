@@ -18,6 +18,7 @@ import {
   Select,
   type SelectOption,
 } from '../../components/ui';
+import { useReceipt } from '../../components/receipt/ReceiptProvider';
 import { pickCategoryOptions } from '../../utils/categoryOptions';
 import { useLoans } from '../../hooks/useLoans';
 import { useReturnLoan } from '../../hooks/useWalletMutations';
@@ -26,6 +27,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Radius, Spacing, type ThemeColors } from '../../theme';
 import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { formatAmount, formatDate, toISODate } from '../../utils/format';
+import { receiptFromLoan } from '../../utils/receipt';
 import type { Loan } from '../../types';
 
 const LIMIT = 9;
@@ -42,6 +44,7 @@ const SORT_OPTIONS: SelectOption[] = [
 ];
 
 export function LoansScreen() {
+  const { openReceipt } = useReceipt();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const currency = useAuthStore((state) => state.user?.currency ?? 'PKR');
@@ -215,36 +218,47 @@ export function LoansScreen() {
       <View style={styles.list}>
         {loans.map((loan) => (
           <Card key={loan._id} style={styles.loanCard}>
-            <View style={styles.loanHeader}>
-              <View style={styles.loanNameWrap}>
-                <AppText variant="h3" numberOfLines={1}>
-                  {loan.name}
-                </AppText>
-                <AppText variant="caption" numberOfLines={2} style={styles.loanReason}>
-                  {loan.reason}
-                </AppText>
+            <Pressable
+              onPress={() =>
+                openReceipt(
+                  receiptFromLoan(loan),
+                )
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`View loan receipt for ${loan.name}`}
+              style={({ pressed }) => (pressed ? styles.loanPressed : null)}
+            >
+              <View style={styles.loanHeader}>
+                <View style={styles.loanNameWrap}>
+                  <AppText variant="h3" numberOfLines={1}>
+                    {loan.name}
+                  </AppText>
+                  <AppText variant="caption" numberOfLines={2} style={styles.loanReason}>
+                    {loan.reason}
+                  </AppText>
+                </View>
+                <Badge
+                  label={loan.status === 'returned' ? 'Returned' : 'Pending'}
+                  color={loan.status === 'returned' ? colors.success : colors.danger}
+                  background={loan.status === 'returned' ? colors.successSoft : colors.dangerSoft}
+                />
               </View>
-              <Badge
-                label={loan.status === 'returned' ? 'Returned' : 'Pending'}
-                color={loan.status === 'returned' ? colors.success : colors.danger}
-                background={loan.status === 'returned' ? colors.successSoft : colors.dangerSoft}
-              />
-            </View>
 
-            <AppText variant="h2" color={colors.primaryDeep} style={styles.loanAmount}>
-              {currency} {formatAmount(loan.balance, currency)}
-            </AppText>
+              <AppText variant="h2" color={colors.primaryDeep} style={styles.loanAmount}>
+                {currency} {formatAmount(loan.balance, currency)}
+              </AppText>
 
-            <View style={styles.loanMeta}>
-              <View style={styles.metaItem}>
-                <AppText variant="caption">Paid on</AppText>
-                <AppText variant="label">{formatDate(loan.date)}</AppText>
+              <View style={styles.loanMeta}>
+                <View style={styles.metaItem}>
+                  <AppText variant="caption">Paid on</AppText>
+                  <AppText variant="label">{formatDate(loan.date)}</AppText>
+                </View>
+                <View style={styles.metaItem}>
+                  <AppText variant="caption">Expected return</AppText>
+                  <AppText variant="label">{formatDate(loan.return)}</AppText>
+                </View>
               </View>
-              <View style={styles.metaItem}>
-                <AppText variant="caption">Expected return</AppText>
-                <AppText variant="label">{formatDate(loan.return)}</AppText>
-              </View>
-            </View>
+            </Pressable>
 
             {loan.status === 'pending' ? (
               <Button
@@ -334,6 +348,7 @@ const createStyles = (colors: ThemeColors) =>
     summary: { marginBottom: Spacing.md },
     list: { gap: Spacing.md },
     loanCard: { padding: Spacing.lg },
+    loanPressed: { opacity: 0.75 },
     loanHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
     loanNameWrap: { flex: 1 },
     loanReason: { marginTop: 2 },

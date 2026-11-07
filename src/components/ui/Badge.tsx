@@ -30,6 +30,7 @@ export type BadgeTone =
   | 'loan'
   | 'return'
   | 'switch'
+  | 'investment'
   | 'pending'
   | 'returned'
   | 'other';
@@ -42,6 +43,7 @@ function toneStyles(colors: ThemeColors): Record<BadgeTone, { color: string; bac
     loan: { color: colors.danger, background: colors.dangerSoft },
     return: { color: colors.success, background: colors.successSoft },
     switch: { color: colors.primary, background: colors.primaryFaint },
+    investment: { color: colors.primary, background: colors.primarySoft },
     pending: { color: colors.primary, background: colors.primarySoft },
     returned: { color: colors.success, background: colors.successFaint },
     other: { color: colors.textSecondary, background: colors.surfaceAlt },

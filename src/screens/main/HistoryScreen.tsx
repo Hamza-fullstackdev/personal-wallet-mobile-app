@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useReceipt } from '../../components/receipt/ReceiptProvider';
 import {
   AppText,
   Banner,
@@ -23,6 +24,7 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { Radius, Spacing, type ThemeColors } from '../../theme';
 import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { formatDateTime, toISODate } from '../../utils/format';
+import { receiptFromNotification } from '../../utils/receipt';
 import { toneColors, transactionMeta } from '../../utils/transactionMeta';
 import type { NotificationType } from '../../types';
 
@@ -34,6 +36,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   loan: 'Loan',
   return: 'Return',
   switch: 'Transfer',
+  investment: 'Investment',
 };
 
 const TYPE_TONES: Record<NotificationType, BadgeTone> = {
@@ -42,6 +45,7 @@ const TYPE_TONES: Record<NotificationType, BadgeTone> = {
   loan: 'loan',
   return: 'return',
   switch: 'switch',
+  investment: 'investment',
 };
 
 const SORT_OPTIONS: SelectOption[] = [
@@ -50,6 +54,7 @@ const SORT_OPTIONS: SelectOption[] = [
 ];
 
 export function HistoryScreen() {
+  const { openReceipt } = useReceipt();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const tones = toneColors(colors);
@@ -105,7 +110,7 @@ export function HistoryScreen() {
   const typeOptions: SelectOption[] = useMemo(() => {
     const source: NotificationType[] = availableTypes.length
       ? availableTypes
-      : ['incoming', 'outgoing', 'loan', 'return', 'switch'];
+      : ['incoming', 'outgoing', 'loan', 'return', 'switch', 'investment'];
     return [{ label: 'All types', value: 'all' }, ...source.map((item) => ({ label: TYPE_LABELS[item], value: item }))];
   }, [availableTypes]);
 
@@ -197,25 +202,34 @@ export function HistoryScreen() {
           const meta = transactionMeta(item.type);
           const tone = tones[meta.tone];
           return (
-            <Card key={item._id} style={styles.notificationCard}>
-              <View style={styles.notificationRow}>
-                <View style={[styles.typeIcon, { backgroundColor: tone.bg }]}>
-                  <Ionicons name={meta.icon} size={18} color={tone.fg} />
-                </View>
-                <View style={styles.notificationBody}>
-                  <AppText variant="body" weight="medium" numberOfLines={2}>
-                    {item.title}
-                  </AppText>
-                  <AppText variant="caption" numberOfLines={2} style={styles.notificationMessage}>
-                    {item.message}
-                  </AppText>
-                  <View style={styles.notificationFooter}>
-                    <ToneBadge label={TYPE_LABELS[item.type] ?? 'Other'} tone={TYPE_TONES[item.type] ?? 'other'} />
-                    <AppText variant="caption">{formatDateTime(item.createdAt)}</AppText>
+            <Pressable
+              key={item._id}
+              onPress={() => openReceipt(receiptFromNotification(item))}
+              style={({ pressed }) => (pressed ? styles.pressed : null)}
+            >
+              <Card style={styles.notificationCard}>
+                <View style={styles.notificationRow}>
+                  <View style={[styles.typeIcon, { backgroundColor: tone.bg }]}>
+                    <Ionicons name={meta.icon} size={18} color={tone.fg} />
+                  </View>
+                  <View style={styles.notificationBody}>
+                    <AppText variant="body" weight="medium" numberOfLines={2}>
+                      {item.title}
+                    </AppText>
+                    <AppText variant="caption" numberOfLines={2} style={styles.notificationMessage}>
+                      {item.message}
+                    </AppText>
+                    <View style={styles.notificationFooter}>
+                      <ToneBadge label={TYPE_LABELS[item.type] ?? 'Other'} tone={TYPE_TONES[item.type] ?? 'other'} />
+                      <View style={styles.notificationFooterMeta}>
+                        <AppText variant="caption">{formatDateTime(item.createdAt)}</AppText>
+                        <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+                      </View>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Card>
+              </Card>
+            </Pressable>
           );
         })}
       </View>
@@ -246,6 +260,7 @@ const createStyles = (colors: ThemeColors) =>
     reset: { marginTop: Spacing.md, alignSelf: 'flex-start' },
     summary: { marginBottom: Spacing.md },
     list: { gap: Spacing.md },
+    pressed: { opacity: 0.85 },
     notificationCard: { padding: Spacing.lg },
     notificationRow: { flexDirection: 'row', gap: Spacing.md },
     typeIcon: {
@@ -262,6 +277,11 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       marginTop: Spacing.md,
+    },
+    notificationFooterMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
     },
   });
 

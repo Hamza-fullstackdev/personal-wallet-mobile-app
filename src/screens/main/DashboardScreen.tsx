@@ -6,12 +6,20 @@ import {
 } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useMemo, useState } from "react";
-import { AppState, Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  AppState,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import { MonthlyOverviewCard } from "../../components/dashboard/MonthlyOverviewCard";
 import { RecentActivity } from "../../components/dashboard/RecentActivity";
 import { UpcomingLoansCard } from "../../components/dashboard/UpcomingLoansCard";
+import { useReceipt } from "../../components/receipt/ReceiptProvider";
 import {
   AppText,
   Banner,
@@ -38,6 +46,10 @@ import {
   signedAmount,
   toISODate,
 } from "../../utils/format";
+import {
+  receiptFromLoan,
+  receiptFromStatementTransaction,
+} from "../../utils/receipt";
 
 type Nav = CompositeNavigationProp<
   NativeStackNavigationProp<HomeStackParamList>,
@@ -96,10 +108,31 @@ const ACTIONS: QuickAction[] = [
     icon: "document-text",
     onPress: (nav) => nav.navigate("Statement"),
   },
+  {
+    key: "charts",
+    label: "Charts",
+    icon: "stats-chart",
+    onPress: (nav) => nav.navigate("Charts"),
+  },
+  {
+    key: "calendar",
+    label: "Calendar",
+    icon: "calendar-outline",
+    onPress: (nav) => nav.navigate("ExpenseCalendar"),
+  },
+  {
+    key: "todos",
+    label: "Todos",
+    icon: "checkbox",
+    onPress: (nav) => nav.navigate("TodosTab", { screen: "Todos" }),
+  },
 ];
 
 export function DashboardScreen() {
   const navigation = useNavigation<Nav>();
+  const { width } = useWindowDimensions();
+  const actionsScrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const { openReceipt } = useReceipt();
   const user = useAuthStore((state) => state.user);
   const currency = user?.currency ?? "PKR";
   const { colors, gradients } = useTheme();
@@ -122,6 +155,18 @@ export function DashboardScreen() {
     day: "numeric",
   });
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "there";
+  const actionPageWidth = Math.max(0, width - Spacing.xl * 2);
+  const actionPageCount = Math.ceil(ACTIONS.length / 4);
+  const [actionPage, setActionPage] = useState(0);
+
+  const goToActionPage = (page: number) => {
+    const nextPage = Math.max(0, Math.min(actionPageCount - 1, page));
+    setActionPage(nextPage);
+    actionsScrollRef.current?.scrollTo({
+      x: nextPage * actionPageWidth,
+      animated: true,
+    });
+  };
 
   const {
     categories,
@@ -317,40 +362,122 @@ export function DashboardScreen() {
 
       {/* Quick actions */}
       <View style={styles.section}>
-        <AppText variant='h3' style={styles.sectionTitle}>
+        <AppText variant='h3' style={styles.actionsHeader}>
           Quick actions
         </AppText>
-        <View style={styles.actionsGrid}>
-          {ACTIONS.map((action) => {
-            const tone =
-              action.key === "income"
-                ? { fg: colors.success, bg: colors.successSoft }
-                : action.key === "expense" || action.key === "loan"
-                  ? { fg: colors.danger, bg: colors.dangerSoft }
-                  : { fg: colors.primary, bg: colors.primarySoft };
+        <ScrollView
+          ref={actionsScrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(event) => {
+            if (actionPageWidth > 0) {
+              setActionPage(
+                Math.round(event.nativeEvent.contentOffset.x / actionPageWidth),
+              );
+            }
+          }}
+        >
+          {Array.from({ length: actionPageCount }, (_, pageIndex) => {
+            const pageActions = ACTIONS.slice(pageIndex * 4, pageIndex * 4 + 4);
             return (
-              <Pressable
-                key={action.key}
-                onPress={() => action.onPress(navigation)}
-                style={({ pressed }) => [
-                  styles.actionTile,
-                  pressed ? styles.actionPressed : null,
-                ]}
+              <View
+                key={`action-page-${pageIndex}`}
+                style={[styles.actionsPage, { width: actionPageWidth }]}
               >
-                <View style={[styles.actionIcon, { backgroundColor: tone.bg }]}>
-                  <Ionicons name={action.icon} size={22} color={tone.fg} />
-                </View>
-                <AppText
-                  variant='caption'
-                  weight='medium'
-                  center
-                  style={styles.actionLabel}
-                >
-                  {action.label}
-                </AppText>
-              </Pressable>
+                {[0, 1].map((rowIndex) => (
+                  <View key={`action-row-${rowIndex}`} style={styles.actionsRow}>
+                    {pageActions
+                      .slice(rowIndex * 2, rowIndex * 2 + 2)
+                      .map((action) => {
+                        const tone =
+                          action.key === "income"
+                            ? { fg: colors.success, bg: colors.successSoft }
+                            : action.key === "expense" || action.key === "loan"
+                              ? { fg: colors.danger, bg: colors.dangerSoft }
+                              : { fg: colors.primary, bg: colors.primarySoft };
+                        return (
+                          <Pressable
+                            key={action.key}
+                            onPress={() => action.onPress(navigation)}
+                            style={({ pressed }) => [
+                              styles.actionTile,
+                              pressed ? styles.actionPressed : null,
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.actionIcon,
+                                { backgroundColor: tone.bg },
+                              ]}
+                            >
+                              <Ionicons
+                                name={action.icon}
+                                size={22}
+                                color={tone.fg}
+                              />
+                            </View>
+                            <AppText
+                              variant='caption'
+                              weight='medium'
+                              center
+                              style={styles.actionLabel}
+                            >
+                              {action.label}
+                            </AppText>
+                          </Pressable>
+                        );
+                      })}
+                  </View>
+                ))}
+              </View>
             );
           })}
+        </ScrollView>
+        <View style={styles.actionsPager}>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel='Previous quick actions'
+            accessibilityState={{ disabled: actionPage === 0 }}
+            disabled={actionPage === 0}
+            onPress={() => goToActionPage(actionPage - 1)}
+            style={[
+              styles.pageButton,
+              actionPage === 0 ? styles.pageButtonDisabled : null,
+            ]}
+          >
+            <Ionicons name='chevron-back' size={18} color={colors.primary} />
+          </Pressable>
+          <View style={styles.pageDots}>
+            {Array.from({ length: actionPageCount }, (_, pageIndex) => (
+              <Pressable
+                key={`action-dot-${pageIndex}`}
+                accessibilityRole='button'
+                accessibilityLabel={`Quick actions page ${pageIndex + 1}`}
+                accessibilityState={{ selected: actionPage === pageIndex }}
+                onPress={() => goToActionPage(pageIndex)}
+                style={[
+                  styles.pageDot,
+                  actionPage === pageIndex ? styles.pageDotActive : null,
+                ]}
+              />
+            ))}
+          </View>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel='Next quick actions'
+            accessibilityState={{ disabled: actionPage === actionPageCount - 1 }}
+            disabled={actionPage === actionPageCount - 1}
+            onPress={() => goToActionPage(actionPage + 1)}
+            style={[
+              styles.pageButton,
+              actionPage === actionPageCount - 1
+                ? styles.pageButtonDisabled
+                : null,
+            ]}
+          >
+            <Ionicons name='chevron-forward' size={18} color={colors.primary} />
+          </Pressable>
         </View>
       </View>
 
@@ -362,18 +489,22 @@ export function DashboardScreen() {
           hidden={amountsHidden}
           onViewAll={() => navigation.navigate("Loans")}
           onGiveLoan={() => navigation.navigate("GiveLoan")}
+          onPressLoan={(loan) => openReceipt(receiptFromLoan(loan))}
         />
       </View>
 
       {/* Recent activity */}
       {statement ? (
         <View style={styles.section}>
-          <RecentActivity
-            transactions={statement.transactions.slice(0, 5)}
-            currency={currency}
-            hidden={amountsHidden}
-            onViewAll={() => navigation.navigate("HistoryTab")}
-          />
+            <RecentActivity
+              transactions={statement.transactions.slice(0, 5)}
+              currency={currency}
+              hidden={amountsHidden}
+              onViewAll={() => navigation.navigate("HistoryTab")}
+              onPressItem={(transaction) =>
+                openReceipt(receiptFromStatementTransaction(transaction))
+              }
+            />
         </View>
       ) : null}
 
@@ -580,6 +711,9 @@ const createStyles = (colors: ThemeColors) =>
       marginHorizontal: Spacing.md,
     },
     section: { marginTop: Spacing.xxl },
+    actionsHeader: {
+      marginBottom: Spacing.lg,
+    },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",
@@ -587,14 +721,16 @@ const createStyles = (colors: ThemeColors) =>
       marginBottom: Spacing.lg,
     },
     sectionTitle: { marginBottom: Spacing.lg },
-    actionsGrid: {
+    actionsPage: {
+      gap: Spacing.md,
+    },
+    actionsRow: {
       flexDirection: "row",
-      flexWrap: "wrap",
       gap: Spacing.md,
     },
     actionTile: {
-      width: "31%",
-      flexGrow: 1,
+      flex: 1,
+      minHeight: 92,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.divider,
@@ -602,6 +738,41 @@ const createStyles = (colors: ThemeColors) =>
       paddingVertical: Spacing.lg,
       alignItems: "center",
       gap: Spacing.sm,
+    },
+    actionsPager: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: Spacing.md,
+    },
+    pageButton: {
+      width: 36,
+      height: 36,
+      borderRadius: Radius.pill,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    pageButtonDisabled: {
+      opacity: 0.35,
+    },
+    pageDots: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: Spacing.sm,
+    },
+    pageDot: {
+      width: 8,
+      height: 8,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.border,
+    },
+    pageDotActive: {
+      width: 20,
+      backgroundColor: colors.primary,
     },
     actionPressed: { backgroundColor: colors.primaryFaint },
     actionIcon: {

@@ -17,6 +17,7 @@ import {
   type BadgeTone,
   type SelectOption,
 } from '../../components/ui';
+import { useReceipt } from '../../components/receipt/ReceiptProvider';
 import { useLoanPeople } from '../../hooks/useLoanPeople';
 import { useStatementData } from '../../hooks/useStatement';
 import { useDownloadStatementPdf } from '../../hooks/useWalletMutations';
@@ -25,6 +26,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Radius, Spacing, type ThemeColors } from '../../theme';
 import { useTheme, useThemedStyles } from '../../theme/ThemeProvider';
 import { daysAgo, formatAmount, toISODate } from '../../utils/format';
+import { receiptFromStatementTransaction } from '../../utils/receipt';
 
 type PeriodFilter = '30' | '60' | '90' | 'all' | 'custom';
 
@@ -51,6 +53,7 @@ const GENERAL_TYPES: SelectOption[] = [
 ];
 
 export function StatementScreen() {
+  const { openReceipt } = useReceipt();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const currency = useAuthStore((state) => state.user?.currency ?? 'PKR');
@@ -259,43 +262,52 @@ export function StatementScreen() {
           ) : (
             <View style={styles.txList}>
               {data.transactions.map((tx) => (
-                <Card key={tx.id} style={styles.txCard}>
-                  <View style={styles.txHeader}>
-                    <View style={styles.txInfo}>
-                      <AppText variant="body" weight="medium" numberOfLines={2}>
-                        {tx.title}
-                      </AppText>
-                      <AppText variant="caption" numberOfLines={1} style={styles.txDescription}>
-                        {tx.description}
-                      </AppText>
+                <Pressable
+                  key={tx.id}
+                  onPress={() => openReceipt(receiptFromStatementTransaction(tx))}
+                  style={({ pressed }) => (pressed ? styles.txPressed : null)}
+                >
+                  <Card style={styles.txCard}>
+                    <View style={styles.txHeader}>
+                      <View style={styles.txInfo}>
+                        <AppText variant="body" weight="medium" numberOfLines={2}>
+                          {tx.title}
+                        </AppText>
+                        <AppText variant="caption" numberOfLines={1} style={styles.txDescription}>
+                          {tx.description}
+                        </AppText>
+                      </View>
+                      <ToneBadge label={tx.typeLabel} tone={statementTone(tx.type)} />
                     </View>
-                    <ToneBadge label={tx.typeLabel} tone={statementTone(tx.type)} />
-                  </View>
 
-                  <View style={styles.txFooter}>
-                    <View style={styles.txFooterItem}>
-                      <AppText variant="caption">{tx.date}</AppText>
-                      {tx.category && tx.category !== '—' ? (
-                        <AppText variant="caption" color={colors.primary}>
-                          {tx.category}
-                        </AppText>
-                      ) : null}
+                    <View style={styles.txFooter}>
+                      <View style={styles.txFooterItem}>
+                        <AppText variant="caption">{tx.date}</AppText>
+                        {tx.category && tx.category !== '—' ? (
+                          <AppText variant="caption" color={colors.primary}>
+                            {tx.category}
+                          </AppText>
+                        ) : null}
+                      </View>
+                      <View style={styles.txAmounts}>
+                        {tx.credit > 0 ? (
+                          <AppText variant="amount" color={colors.success}>
+                            + {currency} {formatAmount(tx.credit, currency)}
+                          </AppText>
+                        ) : null}
+                        {tx.debit > 0 ? (
+                          <AppText variant="amount" color={colors.danger}>
+                            - {currency} {formatAmount(tx.debit, currency)}
+                          </AppText>
+                        ) : null}
+                        <View style={styles.txBalanceRow}>
+                          <AppText variant="caption">Bal {formatAmount(tx.runningBalance, currency)}</AppText>
+                          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+                        </View>
+                      </View>
                     </View>
-                    <View style={styles.txAmounts}>
-                      {tx.credit > 0 ? (
-                        <AppText variant="amount" color={colors.success}>
-                          + {currency} {formatAmount(tx.credit, currency)}
-                        </AppText>
-                      ) : null}
-                      {tx.debit > 0 ? (
-                        <AppText variant="amount" color={colors.danger}>
-                          - {currency} {formatAmount(tx.debit, currency)}
-                        </AppText>
-                      ) : null}
-                      <AppText variant="caption">Bal {formatAmount(tx.runningBalance, currency)}</AppText>
-                    </View>
-                  </View>
-                </Card>
+                  </Card>
+                </Pressable>
               ))}
             </View>
           )}
@@ -421,6 +433,8 @@ const createStyles = (colors: ThemeColors) =>
   },
   txFooterItem: { flex: 1, gap: 2 },
   txAmounts: { alignItems: 'flex-end', gap: 2 },
+  txBalanceRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  txPressed: { opacity: 0.85 },
 });
 
 export default StatementScreen;

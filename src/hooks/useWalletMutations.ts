@@ -31,6 +31,7 @@ function useInvalidateWallet() {
     void queryClient.invalidateQueries({ queryKey: queryKeys.loans.all });
     void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
     void queryClient.invalidateQueries({ queryKey: queryKeys.statement.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
   };
 }
 

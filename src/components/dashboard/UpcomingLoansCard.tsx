@@ -12,6 +12,7 @@ interface UpcomingLoansCardProps {
   currency?: string;
   onViewAll?: () => void;
   onGiveLoan?: () => void;
+  onPressLoan?: (loan: Loan) => void;
   hidden?: boolean;
 }
 
@@ -51,6 +52,7 @@ export function UpcomingLoansCard({
   currency = 'PKR',
   onViewAll,
   onGiveLoan,
+  onPressLoan,
   hidden = false,
 }: UpcomingLoansCardProps) {
   const { colors } = useTheme();
@@ -78,8 +80,8 @@ export function UpcomingLoansCard({
       <View style={styles.list}>
         {loans.map((loan) => {
           const due = dueInfo(loan.return, colors);
-          return (
-            <View key={loan._id} style={styles.row}>
+          const row = (
+            <View style={styles.row}>
               <View style={styles.icon}>
                 <Ionicons name="person-outline" size={18} color={colors.primary} />
               </View>
@@ -103,6 +105,19 @@ export function UpcomingLoansCard({
                 />
               </View>
             </View>
+          );
+          return onPressLoan ? (
+            <Pressable
+              key={loan._id}
+              onPress={() => onPressLoan(loan)}
+              accessibilityRole="button"
+              accessibilityLabel={`View loan receipt for ${loan.name}`}
+              style={({ pressed }) => (pressed ? styles.pressed : null)}
+            >
+              {row}
+            </Pressable>
+          ) : (
+            <View key={loan._id}>{row}</View>
           );
         })}
       </View>
