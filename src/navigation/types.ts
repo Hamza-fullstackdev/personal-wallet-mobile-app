@@ -13,6 +13,16 @@ export type HomeStackParamList = {
   Loans: undefined;
   ExpenseCalendar: undefined;
   Charts: undefined;
+  SpendingHeatmap: undefined;
+  ExpenseBubbleMap: undefined;
+  SpendingComparison: undefined;
+  FinancialStreaks: undefined;
+  FinancialReplay: undefined;
+  MoneyRiver: undefined;
+  ExpenseDna: undefined;
+  SalarySurvival: undefined;
+  WhatIfLab: undefined;
+  FinancialWrapped: undefined;
 };
 
 export type LoansStackParamList = {

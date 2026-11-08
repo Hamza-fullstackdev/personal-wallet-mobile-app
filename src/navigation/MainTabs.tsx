@@ -26,6 +26,16 @@ import TodoFormScreen from '../screens/main/TodoFormScreen';
 import HistoryScreen from '../screens/main/HistoryScreen';
 import ExpenseCalendarScreen from '../screens/main/ExpenseCalendarScreen';
 import ChartsScreen from '../screens/main/ChartsScreen';
+import SpendingHeatmapScreen from '../screens/main/SpendingHeatmapScreen';
+import ExpenseBubbleMapScreen from '../screens/main/ExpenseBubbleMapScreen';
+import SpendingComparisonScreen from '../screens/main/SpendingComparisonScreen';
+import FinancialStreaksScreen from '../screens/main/FinancialStreaksScreen';
+import FinancialReplayScreen from '../screens/main/FinancialReplayScreen';
+import MoneyRiverScreen from '../screens/main/MoneyRiverScreen';
+import ExpenseDnaScreen from '../screens/main/ExpenseDnaScreen';
+import SalarySurvivalScreen from '../screens/main/SalarySurvivalScreen';
+import WhatIfLabScreen from '../screens/main/WhatIfLabScreen';
+import FinancialWrappedScreen from '../screens/main/FinancialWrappedScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -60,6 +70,31 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Loans" component={LoansScreen} />
       <HomeStack.Screen name="ExpenseCalendar" component={ExpenseCalendarScreen} />
       <HomeStack.Screen name="Charts" component={ChartsScreen} />
+      <HomeStack.Screen name="SpendingHeatmap" component={SpendingHeatmapScreen} />
+      <HomeStack.Screen name="ExpenseBubbleMap" component={ExpenseBubbleMapScreen} />
+      <HomeStack.Screen
+        name="SpendingComparison"
+        component={SpendingComparisonScreen}
+      />
+      <HomeStack.Screen
+        name="FinancialStreaks"
+        component={FinancialStreaksScreen}
+      />
+      <HomeStack.Screen
+        name="FinancialReplay"
+        component={FinancialReplayScreen}
+      />
+      <HomeStack.Screen name="MoneyRiver" component={MoneyRiverScreen} />
+      <HomeStack.Screen name="ExpenseDna" component={ExpenseDnaScreen} />
+      <HomeStack.Screen
+        name="SalarySurvival"
+        component={SalarySurvivalScreen}
+      />
+      <HomeStack.Screen name="WhatIfLab" component={WhatIfLabScreen} />
+      <HomeStack.Screen
+        name="FinancialWrapped"
+        component={FinancialWrappedScreen}
+      />
     </HomeStack.Navigator>
   );
 }
